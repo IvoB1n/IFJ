@@ -8,4 +8,4 @@ typedef enum {
     SEMANTIC_OTHER_ERRORS,
     SEMANTIC_ZERO_DIVIDION_ERROR = 9,
     INTERNAL_ERROR = 99
-} Errors_list
+} Errors_list;
