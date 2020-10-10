@@ -10,7 +10,7 @@ int init_token(char c, Token *token) {
     if (token->data = malloc(sizeof(char))) {
         token->data[token->data_size] = c;
         token->data_size++;
-        printf( "%d, %s, %d\n", token->type, token->data, token->data_size);
+        //printf( "%d, %s, %d\n", token->type, token->data, token->data_size);
     } else {
         fprintf(stderr, "Malloc error\n");
         return 1;
@@ -23,7 +23,7 @@ int expand_token(char c, Token *token) {
     if (token->data = realloc(token->data, (token->data_size + 1) * sizeof(char))) {
         token->data[token->data_size] = c;
         token->data_size++;
-        printf( "%d, %s, %d\n", token->type, token->data, token->data_size);
+        //printf( "%d, %s, %d\n", token->type, token->data, token->data_size);
     } else {
         fprintf(stderr, "Realloc error\n");
         return 1;
@@ -32,7 +32,7 @@ int expand_token(char c, Token *token) {
 }
 
 void free_token (Token *token) {
-    printf("free memory\n");
+    //printf("free memory\n");
     free(token->data);
     token->data = NULL;
     //token->data[0] = '\0';
@@ -41,8 +41,8 @@ void free_token (Token *token) {
 }
 
 void parser_function (Token *token) {
-    printf("parser\n");
-    printf( "%d, %s, %d\n", token->type, token->data, token->data_size);
+    printf("GO TO PARSER\n");
+    printf( "%s, %d\n", token->data, token->data_size);
     //printf("parser2\n");
     free_token(token);
 }
@@ -115,7 +115,8 @@ int control_float(Token *token, char *c) {
     if (*c == 'E' || *c == 'e') {
         *c = getchar();
         control_exp(token, c);
-    } else if (*c == ';' || 
+    } else if (*c == ';' ||
+               *c == ',' || 
                *c == '>' ||
                *c == '<' ||
                *c == '+' ||
@@ -127,6 +128,7 @@ int control_float(Token *token, char *c) {
                *c == '=' ||
                *c == ' ' || 
                *c == '|' ||
+               *c == EOL || *c == '\t' || *c == '\f' || *c == '\r' || *c == '\v' ||
                *c == '&') {
                parser_function(token);
                return 0;
@@ -140,7 +142,7 @@ int get_next_token(Token *token, FILE *f) {
     char c = getchar();
     while (c != EOF) {
 
-        printf("111\n");
+        //printf("111\n");
         // token (
         if (c == '(') {
             token->type = ROUND_BR_L;
@@ -312,6 +314,16 @@ int get_next_token(Token *token, FILE *f) {
                 c = getchar();
             }
 
+        // token .
+        } else if (c == '.') {
+            token->type = POINT;
+            if (init_token(c, token)) {
+                return INTERNAL_ERROR;
+            } else {
+                parser_function(token);
+                c = getchar();
+            }
+
         // token ;
         } else if (c == ';') {
             token->type = COLON;
@@ -413,9 +425,15 @@ int get_next_token(Token *token, FILE *f) {
 
             // string comment
             if (c == '/') {
-                while (c = getchar() != EOL);    // ???sghagaeg\n
+                c = getchar();
+                while (c != EOL) {
+                    printf("%c", c);
+                    c = getchar();
+                }
+                printf("\n");
                 //c = getchar();
-                //continue;
+                free_token(token);
+                continue;
             // start block comment               
             } else if (c == '*') {  
                 c = getchar();
@@ -427,13 +445,14 @@ int get_next_token(Token *token, FILE *f) {
                     } else if (c == '*') {
                         c = getchar();
                         if (c == '/') {
+                            free_token(token);
                             break;
                         } else {
                             continue;
                         }
                     } else {
                         c = getchar();
-                        //continue;
+                        continue;
                     }
                 }
             } else {
@@ -479,7 +498,12 @@ int get_next_token(Token *token, FILE *f) {
                     }
                 }
             }
-            parser_function(token);
+            if (expand_token(c, token)) {
+                return INTERNAL_ERROR;
+            } else {
+                parser_function(token);
+                c = getchar();
+            }    
 
         // token zero 
         } else if (c == '0') {
@@ -506,7 +530,8 @@ int get_next_token(Token *token, FILE *f) {
                     c = getchar();
                     control_exp(token, &c);  // napisat
                 }
-            } else if (c == ';' || 
+            } else if (c == ';' ||
+                       c == ',' || 
                        c == '>' ||
                        c == '<' ||
                        c == '+' ||
@@ -518,7 +543,8 @@ int get_next_token(Token *token, FILE *f) {
                        c == '=' ||
                        c == ' ' || 
                        c == '|' ||
-                       c == '&') {
+                       c == '&' || c == '\t' || c == '\f' || c == '\r' || c == '\v' ||
+                       c == EOL) {
                         parser_function(token);
                         //continue;
 
@@ -567,6 +593,8 @@ int get_next_token(Token *token, FILE *f) {
                        c == '=' ||
                        c == ' ' || 
                        c == '|' ||
+                       c == ',' ||
+                       c == EOL || c == '\t' || c == '\f' || c == '\r' || c == '\v' ||
                        c == '&') {
                         parser_function(token);
                         //continue;
@@ -575,11 +603,11 @@ int get_next_token(Token *token, FILE *f) {
                 return 4;
             }
         } else if (c == EOL) {
-            printf("End of line\n");
+            //printf("End of line\n");
             //parser_function(token);
             c = getchar();
         } else if (c == ' ' || c == '\t' || c == '\f' || c == '\r' || c == '\v') {
-            printf("whitespace\n");
+            //printf("whitespace\n");
             //parser_function(token);
             c = getchar();
             //printf("%c\n", c);

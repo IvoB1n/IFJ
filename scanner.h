@@ -15,7 +15,7 @@ typedef enum {
     // BOOLEAN OPERATORS
     AND_SYM, AND, OR_SYM, OR,
     // OTHER SYMBOLS
-    COMMA, COLON,
+    COMMA, COLON, POINT,
     // MATH OPERATORS
     ADD, SUB, MUL, MOD, DIV,
     // COMMENTS
