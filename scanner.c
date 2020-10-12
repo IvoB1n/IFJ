@@ -604,7 +604,7 @@ int get_next_token(Token *token, FILE *f) {
             }
         } else if (c == EOL) {
             //printf("End of line\n");
-            //parser_function(token);
+            parser_function(token);
             c = getchar();
         } else if (c == ' ' || c == '\t' || c == '\f' || c == '\r' || c == '\v') {
             //printf("whitespace\n");
