@@ -9,8 +9,8 @@
 int init_token(char c, Token *token) {
     //printf("init token1\n");
     if (token->data = malloc(sizeof(char))) {
-        token->data[token->data_size] = c;
-        token->data_size++;
+        token->data[0] = c;
+        token->data_size = 1;
         //printf( "%d, %s, %d\n", token->type, token->data, token->data_size);
     } else {
         fprintf(stderr, "Malloc error\n");
