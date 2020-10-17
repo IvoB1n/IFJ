@@ -2,6 +2,7 @@
 #include "error.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #define EOL '\n'  // ???
 
@@ -42,9 +43,32 @@ void free_token (Token *token) {
 
 void parser_function (Token *token) {
     printf("GO TO PARSER\n");
-    printf( "%s, %d\n", token->data, token->data_size);
+    printf( "%d, \"%s\", %d\n", token->type, token->data, token->data_size);
     //printf("parser2\n");
     free_token(token);
+}
+
+Token control_reserved_words (Token *token) {
+    if (strcmp(token->data, "else") == 0) {
+        token->type = ELSE; 
+    } else if (strcmp(token->data, "float64") == 0) {
+        token->type = FLOAT64;
+    } else if (strcmp(token->data, "for") == 0) {
+        token->type = FOR;
+    } else if (strcmp(token->data, "func") == 0) {
+        token->type = FUNC;
+    } else if (strcmp(token->data, "if") == 0) {
+        token->type = IF;
+    } else if (strcmp(token->data, "int") == 0) {
+        token->type = INT;
+    } else if (strcmp(token->data, "package") == 0) {
+        token->type = PACKAGE;
+    } else if (strcmp(token->data, "return") == 0) {
+        token->type = RETURN;
+    } else if (strcmp(token->data, "string") == 0) {
+        token->type = STRING;
+    }
+    return *token;
 }
 
 int control_exp(Token *token, char *c) {
@@ -478,6 +502,7 @@ int get_next_token(Token *token, FILE *f) {
                     c = getchar();              // gfskgm*
                 }
             }
+            control_reserved_words(token);
             parser_function(token);
         
         // token string 
@@ -604,6 +629,7 @@ int get_next_token(Token *token, FILE *f) {
             }
         } else if (c == EOL) {
             //printf("End of line\n");
+            token->type = END_OF_LINE;
             parser_function(token);
             c = getchar();
         } else if (c == ' ' || c == '\t' || c == '\f' || c == '\r' || c == '\v') {
