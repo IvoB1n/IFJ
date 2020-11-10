@@ -3,31 +3,28 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
-#define EOL '\n'  // ???
+#define EOL '\n'
 
 int init_token(char c, Token *token) {
-    //printf("init token1\n");
     if (token->data = malloc(sizeof(char))) {
         token->data[0] = c;
         token->data_size = 1;
-        //printf( "%d, %s, %d\n", token->type, token->data, token->data_size);
     } else {
         fprintf(stderr, "Malloc error\n");
-        return 1;
+        return INTERNAL_ERROR;
     }
     return 0;
 }
 
 int expand_token(char c, Token *token) {
-    //printf("expand token1\n");
     if (token->data = realloc(token->data, (token->data_size + 1) * sizeof(char))) {
         token->data[token->data_size] = c;
         token->data_size++;
-        //printf( "%d, %s, %d\n", token->type, token->data, token->data_size);
     } else {
         fprintf(stderr, "Realloc error\n");
-        return 1;
+        return INTERNAL_ERROR;
     }
     return 0;
 }
@@ -43,8 +40,10 @@ void free_token (Token *token) {
 
 void parser_function (Token *token) {
     printf("GO TO PARSER\n");
-    printf( "%d, \"%s\", %d\n", token->type, token->data, token->data_size);
-    //printf("parser2\n");
+    if (expand_token('\0', token)) {
+        return;
+    }
+    printf( "%d, \"%s\", %d\n", token->type, token->data, token->data_size-1);
     free_token(token);
 }
 
@@ -72,7 +71,6 @@ Token control_reserved_words (Token *token) {
 }
 
 int control_exp(Token *token, char *c) {
-    
     if (*c == '+' || *c == '-') {
         if (expand_token(*c, token)) {
             return INTERNAL_ERROR;
@@ -95,8 +93,7 @@ int control_exp(Token *token, char *c) {
                     return 0;
                 }
             } else {
-                fprintf(stderr, "Bad number\n");
-                return 4;
+                return LEXICAL_ERROR;
             }
         }
     } else if (*c >= '0' && *c <= '9') {
@@ -116,14 +113,12 @@ int control_exp(Token *token, char *c) {
             return 0;
         }
     } else {
-        fprintf(stderr, "Bad number\n");
-        return 4;
+        return LEXICAL_ERROR;
     }
 }
 
 int control_float(Token *token, char *c) {
     token->type = FLOAT;
-    
     if (*c >= '0' && *c <= '9') {
         if (expand_token(*c, token)) {
             return INTERNAL_ERROR;
@@ -132,13 +127,21 @@ int control_float(Token *token, char *c) {
             while (*c >= '0' && *c <= '9') {
                 if (expand_token(*c, token)) {
                     return INTERNAL_ERROR;
-                }
+                } 
+                *c = getchar();
             }
         }
     } 
     if (*c == 'E' || *c == 'e') {
+        if (expand_token(*c, token)) {
+             return INTERNAL_ERROR;
+        }
         *c = getchar();
-        control_exp(token, c);
+        switch(control_exp(token, c)) {
+            case LEXICAL_ERROR: return LEXICAL_ERROR;
+            case INTERNAL_ERROR: return INTERNAL_ERROR;
+            default: return 0;
+        }
     } else if (*c == ';' ||
                *c == ',' || 
                *c == '>' ||
@@ -152,21 +155,19 @@ int control_float(Token *token, char *c) {
                *c == '=' ||
                *c == ' ' || 
                *c == '|' ||
-               *c == EOL || *c == '\t' || *c == '\f' || *c == '\r' || *c == '\v' ||
-               *c == '&') {
+               *c == EOL || 
+               *c == '&' ||
+               isspace(*c)) {
                parser_function(token);
                return 0;
-            } else {
-        fprintf(stderr, "Bad number\n");
-        return 4;
     }
+    return LEXICAL_ERROR;
 }
 
 int get_next_token(Token *token, FILE *f) {
     char c = getchar();
     while (c != EOF) {
-
-        //printf("111\n");
+            //printf("start token\n");
         // token (
         if (c == '(') {
             token->type = ROUND_BR_L;
@@ -242,8 +243,7 @@ int get_next_token(Token *token, FILE *f) {
                     c = getchar();
                 }
             } else {
-                fprintf(stderr, "Bad token\n");
-                return 2;
+                return LEXICAL_ERROR;
             }
 
         // token >
@@ -373,8 +373,7 @@ int get_next_token(Token *token, FILE *f) {
                     c = getchar();
                 }
             } else {
-                fprintf(stderr, "Bad token\n");
-                return 2;
+                return LEXICAL_ERROR;
             }
 
         // token ||
@@ -392,8 +391,7 @@ int get_next_token(Token *token, FILE *f) {
                     c = getchar();
                 }
             } else {
-                fprintf(stderr, "Bad token\n");
-                return 2;
+                return LEXICAL_ERROR;
             }
 
         // token !
@@ -414,8 +412,7 @@ int get_next_token(Token *token, FILE *f) {
                     c = getchar();
                 }
             } else {
-                fprintf(stderr, "Bad token\n");
-                return 2;
+                return LEXICAL_ERROR;
             }
 
         // token =
@@ -455,7 +452,6 @@ int get_next_token(Token *token, FILE *f) {
                     c = getchar();
                 }
                 printf("\n");
-                //c = getchar();
                 free_token(token);
                 continue;
             // start block comment               
@@ -463,8 +459,7 @@ int get_next_token(Token *token, FILE *f) {
                 c = getchar();
                 while (1) {
                     if (c == EOF) {
-                        fprintf(stderr, "Bad comment\n");
-                        return 3;
+                        return LEXICAL_ERROR;
                     // end block comment
                     } else if (c == '*') {
                         c = getchar();
@@ -499,7 +494,7 @@ int get_next_token(Token *token, FILE *f) {
                 if (expand_token(c,token)) {
                     return INTERNAL_ERROR;
                 } else {
-                    c = getchar();              // gfskgm*
+                    c = getchar(); 
                 }
             }
             control_reserved_words(token);
@@ -513,8 +508,7 @@ int get_next_token(Token *token, FILE *f) {
             }
             while ((c = getchar()) != '"') {
                 if (c == EOF || c == EOL) {
-                    fprintf(stderr, "Bad string\n");        /// a = 0; "??????
-                    return 5;                               /// "gnoisgo"
+                    return LEXICAL_ERROR;                         
                 } else {
                     if (expand_token(c, token)) {
                         return INTERNAL_ERROR;
@@ -544,7 +538,11 @@ int get_next_token(Token *token, FILE *f) {
                     return INTERNAL_ERROR;
                 } else {
                     c = getchar();  
-                    control_float(token, &c); // napisat
+                    switch(control_float(token, &c)) {
+                        case LEXICAL_ERROR: return LEXICAL_ERROR;
+                        case INTERNAL_ERROR: return INTERNAL_ERROR;
+                        default: continue;
+                    }
                 }
 
             // token exp
@@ -553,7 +551,11 @@ int get_next_token(Token *token, FILE *f) {
                     return INTERNAL_ERROR;
                 } else {
                     c = getchar();
-                    control_exp(token, &c);  // napisat
+                    switch(control_exp(token, &c)) {
+                        case LEXICAL_ERROR: return LEXICAL_ERROR;
+                        case INTERNAL_ERROR: return INTERNAL_ERROR;
+                        default: continue;
+                    } 
                 }
             } else if (c == ';' ||
                        c == ',' || 
@@ -568,14 +570,13 @@ int get_next_token(Token *token, FILE *f) {
                        c == '=' ||
                        c == ' ' || 
                        c == '|' ||
-                       c == '&' || c == '\t' || c == '\f' || c == '\r' || c == '\v' ||
-                       c == EOL) {
+                       c == '&' || 
+                       c == EOL ||
+                       isspace(c)) {
                         parser_function(token);
-                        //continue;
 
             } else {
-                fprintf(stderr, "Bad number\n");        /// a = 0; ??????
-                return 4;                               // 0afimogsf
+                return LEXICAL_ERROR;                             
             }
 
         // token integer 
@@ -597,14 +598,22 @@ int get_next_token(Token *token, FILE *f) {
                     return INTERNAL_ERROR;
                 } else {
                     c = getchar();
-                    control_float(token, &c);
+                    switch(control_float(token, &c)) {
+                        case LEXICAL_ERROR: return LEXICAL_ERROR;
+                        case INTERNAL_ERROR: return INTERNAL_ERROR;
+                        default: continue;
+                    }
                 }
             } else if (c == 'E' || c == 'e') {
                 if (expand_token(c, token)) {
                     return INTERNAL_ERROR;
                 } else {
                     c = getchar();
-                    control_exp(token, &c);
+                    switch(control_exp(token, &c)) {
+                        case LEXICAL_ERROR: return LEXICAL_ERROR;
+                        case INTERNAL_ERROR: return INTERNAL_ERROR;
+                        default: continue;
+                    }
                 }
             } else if (c == ';' || 
                        c == '>' ||
@@ -619,24 +628,20 @@ int get_next_token(Token *token, FILE *f) {
                        c == ' ' || 
                        c == '|' ||
                        c == ',' ||
-                       c == EOL || c == '\t' || c == '\f' || c == '\r' || c == '\v' ||
-                       c == '&') {
+                       c == '&' ||
+                       c == EOL || 
+                       isspace(c)) {
                         parser_function(token);
-                        //continue;
             } else {
-                fprintf(stderr, "Bad number\n");        /// a = 0*2; ??????
-                return 4;
+                return LEXICAL_ERROR;
             }
         } else if (c == EOL) {
-            //printf("End of line\n");
+            
             token->type = END_OF_LINE;
             parser_function(token);
             c = getchar();
-        } else if (c == ' ' || c == '\t' || c == '\f' || c == '\r' || c == '\v') {
-            //printf("whitespace\n");
-            //parser_function(token);
+        } else if (isspace(c)) {
             c = getchar();
-            //printf("%c\n", c);
         }
     }
     return 0;
