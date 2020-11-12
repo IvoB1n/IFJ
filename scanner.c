@@ -629,6 +629,8 @@ int get_next_token(Token *token) {
             c = getchar();
         } else if (isspace(c)) {
             c = getchar();
+        } else {
+            return LEXICAL_ERROR;
         }
     }
     return 0;
