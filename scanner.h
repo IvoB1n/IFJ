@@ -1,7 +1,8 @@
 #include <stdio.h>
+#include "dll.h"
 
 typedef enum {
-    ID,
+    ID, ID_FUNC,
     // NUMBERS
     INTEGER, FLOAT, ZERO_MANTISSA, EXP, EXP_SIGNED, EXP_FINAL_NUM,
     // STRING
