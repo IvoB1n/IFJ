@@ -1,14 +1,9 @@
 #include "scanner.h"
-#include "error.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
 
 #define EOL '\n'
 
 int init_token(char c, Token *token) {
-    if (token->data = malloc(sizeof(char))) {
+    if ((token->data = malloc(sizeof(char)))) {
         token->data[0] = c;
         token->data_size = 1;
     } else {
@@ -19,7 +14,7 @@ int init_token(char c, Token *token) {
 }
 
 int expand_token(char c, Token *token) {
-    if (token->data = realloc(token->data, (token->data_size + 1) * sizeof(char))) {
+    if ((token->data = realloc(token->data, (token->data_size + 1) * sizeof(char)))) {
         token->data[token->data_size] = c;
         token->data_size++;
     } else {
@@ -30,20 +25,15 @@ int expand_token(char c, Token *token) {
 }
 
 void free_token (Token *token) {
-    //printf("free memory\n");
     free(token->data);
     token->data = NULL;
-    //token->data[0] = '\0';
     token->data_size = 0;
-    //printf( "%d, %s, %d\n", token->type, token->data, token->data_size);
 }
 
 void parser_function (Token *token) {
-    printf("GO TO PARSER\n");
     if (expand_token('\0', token)) {
         return;
     }
-    printf( "%d, \"%s\", %d\n", token->type, token->data, token->data_size-1);
     free_token(token);
 }
 
@@ -164,10 +154,9 @@ int control_float(Token *token, char *c) {
     return LEXICAL_ERROR;
 }
 
-int get_next_token(Token *token, FILE *f) {
+int get_next_token(Token *token) {
     char c = getchar();
     while (c != EOF) {
-            //printf("start token\n");
         // token (
         if (c == '(') {
             token->type = ROUND_BR_L;
@@ -448,10 +437,8 @@ int get_next_token(Token *token, FILE *f) {
             if (c == '/') {
                 c = getchar();
                 while (c != EOL) {
-                    printf("%c", c);
                     c = getchar();
                 }
-                printf("\n");
                 free_token(token);
                 continue;
             // start block comment               
@@ -646,4 +633,3 @@ int get_next_token(Token *token, FILE *f) {
     }
     return 0;
 }
-

@@ -1,5 +1,9 @@
 #include <stdio.h>
-#include "dll.h"
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+#include "error.h"
 
 typedef enum {
     ID, ID_FUNC,
@@ -33,3 +37,5 @@ typedef struct {
     unsigned data_size; // size of token 
 } Token;
 
+int get_next_token(Token*);
+void free_token(Token*);
