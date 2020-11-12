@@ -53,7 +53,7 @@ void insert_item(Sym_table *table, char *key, Data data) {
         Sym_table_item *new_item = malloc(sizeof(struct Sym_table_item));
 
         if (new_item == NULL) {
-            fprintf("Bad malloc\n");
+            // fprintf("Bad malloc\n");
             return;
         }
         new_item->key = key;

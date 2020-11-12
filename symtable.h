@@ -36,6 +36,7 @@ typedef struct {
     Data value;
 } Data;
 
+
 // Symbol table item
 typedef struct Sym_table_item {
     char *key;  // ID

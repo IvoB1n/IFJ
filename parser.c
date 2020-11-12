@@ -1,11 +1,8 @@
-#include "scanner.h"
-#include "symtable.h"
-#include "error.h"
-
-#include <stdbool.h>
+#include "parser.h"
 
 void get_next_token(Token *token) {
-	token = DLActive(token_list);
+	Token *tmp = token;
+	token = (Token*)token_list->Act->data;
 	DLSucc(token_list);
 }
 
@@ -27,7 +24,7 @@ int func_def_rule(Token *token) {
 		get_next_token(token);
 		if (token->type == ID) {
 			token->type = ID_FUNC;
-			FuncNodePtr func_node = malloc(sizeof(struct func_node));
+			FuncNodePtr func_node = malloc(sizeof(struct funcNode));
 			if (!func_node) {
 				return INTERNAL_ERROR;
 			}
@@ -93,7 +90,7 @@ int func_def_next_rule(Token *token) {
 
 int functions_rule(Token *token) {
 	if (!func_def_rule(token)) {
-		if (!func_def_next_rule(token) {
+		if (!func_def_next_rule(token)) {
 			return 0;
 		}
 	}
@@ -104,7 +101,7 @@ int package_rule(Token *token) {
 	get_next_token(token);
 	if (token->type == PACKAGE) {
 		get_next_token(token);
-		if (!strcmp(token->data, "main") {
+		if (!strcmp(token->data, "main")) {
 			return SYNTAX_ERROR;
 		}
 		get_next_token(token);

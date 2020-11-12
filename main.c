@@ -4,9 +4,8 @@
 int main() {
     Token token;
 
-    if (get_next_token(&token, NULL)) {
+    if (get_token(&token)) {
         fprintf(stderr, "Lexical error occured");
-        free_token(&token);
         return ERROR;
     }
 

@@ -29,12 +29,12 @@ void DLDisposeList (tDLList *L) {
     L->Act = NULL;
 }
 
-void DLInsertFirst (tDLList *L, Token *token, unsigned type) {
-    tDLElemPtr firstElement;
+void DLInsertFirst (tDLList *L, void *token, unsigned type) {
+    tDLElemPtr firstElement = NULL;
     if (type == TOKEN) {
         tDLElemPtr firstElement = malloc(sizeof(struct tDLElem));
     } else {
-        tDLElemPtr firstElement = malloc(sizeof(struct func_node));
+        tDLElemPtr firstElement = malloc(sizeof(struct funcNode));
     }
 
     if (firstElement == NULL) {
@@ -55,12 +55,12 @@ void DLInsertFirst (tDLList *L, Token *token, unsigned type) {
     }
 }
 
-void DLInsertLast(tDLList *L, Token *token, unsigned type) {
-    tDLElemPtr lastElement;
+void DLInsertLast(tDLList *L, void *token, unsigned type) {
+    tDLElemPtr lastElement = NULL;
     if (type == TOKEN) {
         tDLElemPtr firstElement = malloc(sizeof(struct tDLElem));
     } else {
-        tDLElemPtr firstElement = malloc(sizeof(struct func_node));
+        tDLElemPtr firstElement = malloc(sizeof(struct funcNode));
     }
 
     if (lastElement == NULL) {
@@ -95,7 +95,7 @@ void DLCopyFirst (tDLList *L, Token *token) {
         DLError();
         return;
     } else {    
-        (void*)token = L->First->data;
+        // (void*)token = L->First->data;
     }
 }
 
@@ -104,7 +104,7 @@ void DLCopyLast (tDLList *L, Token *token) {
         DLError();
         return;
     } else {    
-        (void*)token = L->Last->data;
+       // (void*)token = L->Last->data;
     }
 }
 
@@ -257,7 +257,7 @@ void DLCopy (tDLList *L, Token *token) {
         DLError();
         return;
     } else {
-        (void*)token = L->Act->data;
+        // (void*)token = L->Act->data;
     }
 }
 
