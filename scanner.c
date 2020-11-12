@@ -12,7 +12,6 @@ int init_token(char c, Token *token) {
         token->data[0] = c;
         token->data_size = 1;
     } else {
-        fprintf(stderr, "Malloc error\n");
         return INTERNAL_ERROR;
     }
     return 0;
@@ -23,7 +22,6 @@ int expand_token(char c, Token *token) {
         token->data[token->data_size] = c;
         token->data_size++;
     } else {
-        fprintf(stderr, "Realloc error\n");
         return INTERNAL_ERROR;
     }
     return 0;
@@ -39,11 +37,10 @@ void free_token (Token *token) {
 }
 
 void parser_function (Token *token) {
-    printf("GO TO PARSER\n");
     if (expand_token('\0', token)) {
         return;
     }
-    printf( "%d, \"%s\", %d\n", token->type, token->data, token->data_size-1);
+    //printf( "%d, \"%s\", %d\n", token->type, token->data, token->data_size-1);
     free_token(token);
 }
 
@@ -89,6 +86,7 @@ int control_exp(Token *token, char *c) {
                             *c = getchar();
                         }
                     }
+                    token->type = FLOAT;
                     parser_function(token);
                     return 0;
                 }
@@ -109,6 +107,7 @@ int control_exp(Token *token, char *c) {
                     *c = getchar();
                 }
             }
+            token->type = FLOAT;
             parser_function(token);
             return 0;
         }
@@ -573,6 +572,7 @@ int get_next_token(Token *token, FILE *f) {
                        c == '&' || 
                        c == EOL ||
                        isspace(c)) {
+                        token->type = INTEGER;
                         parser_function(token);
 
             } else {
