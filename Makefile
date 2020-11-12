@@ -1,10 +1,11 @@
-CFLAGS=-std=gnu99 -Wall -Wextra
+CFLAGS=-std=gnu99 -O2 -Wall -Wextra
 CC=gcc
-TARGET=add_target
-EXECUTABLE=add_executable
 
 all:
-	@echo '*** Please, rewrite Makefile with valid TARGET and EXECUTABLE names ***'
-#   @$(CC) $(CFLAGS) $(TARGET).c -o $(TARGET)
+	$(CC) $(CFLAGS) main.c -o main.o -c
+	$(CC) $(CFLAGS) scanner.c -o scanner.o -c
+	$(CC) $(CFLAGS) parser.c -o parser.o -c
+	$(CC) $(CFLAGS) -o compiler main.o scanner.o parser.o
+	
 clean:
 	rm -rf $(EXECUTABLE) *.o *.out
