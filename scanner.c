@@ -1,14 +1,13 @@
 #include "scanner.h"
-#include "error.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
 
 #define EOL '\n'
-
+/*
+void print_token (Token *token) {
+    printf( "%d, %s, %d\n", token->type, token->data, token->data_size);
+}
+*/
 int init_token(char c, Token *token) {
-    if (token->data = malloc(sizeof(char))) {
+    if ((token->data = malloc(sizeof(char)))) {
         token->data[0] = c;
         token->data_size = 1;
     } else {
@@ -19,7 +18,7 @@ int init_token(char c, Token *token) {
 }
 
 int expand_token(char c, Token *token) {
-    if (token->data = realloc(token->data, (token->data_size + 1) * sizeof(char))) {
+    if ((token->data = realloc(token->data, (token->data_size + 1) * sizeof(char)))) {
         token->data[token->data_size] = c;
         token->data_size++;
     } else {
@@ -30,20 +29,15 @@ int expand_token(char c, Token *token) {
 }
 
 void free_token (Token *token) {
-    //printf("free memory\n");
     free(token->data);
     token->data = NULL;
-    //token->data[0] = '\0';
     token->data_size = 0;
-    //printf( "%d, %s, %d\n", token->type, token->data, token->data_size);
 }
 
 void parser_function (Token *token) {
-    printf("GO TO PARSER\n");
     if (expand_token('\0', token)) {
         return;
     }
-    printf( "%d, \"%s\", %d\n", token->type, token->data, token->data_size-1);
     free_token(token);
 }
 
@@ -164,10 +158,9 @@ int control_float(Token *token, char *c) {
     return LEXICAL_ERROR;
 }
 
-int get_next_token(Token *token, FILE *f) {
+int get_next_token(Token *token) {
     char c = getchar();
     while (c != EOF) {
-            //printf("start token\n");
         // token (
         if (c == '(') {
             token->type = ROUND_BR_L;
@@ -189,7 +182,8 @@ int get_next_token(Token *token, FILE *f) {
             }
 
         // token [
-        } else if (c == '[') {
+            
+        /*} else if (c == '[') {
             token->type = SQUARE_BR_L;
             if (init_token(c, token)) {
                 return INTERNAL_ERROR;
@@ -207,7 +201,7 @@ int get_next_token(Token *token, FILE *f) {
                 parser_function(token);
                 c = getchar(); 
             }
-
+        */
         // token { 
         } else if (c == '{') {
             token->type = CURLY_BR_L;
@@ -339,14 +333,14 @@ int get_next_token(Token *token, FILE *f) {
             }
 
         // token .
-        } else if (c == '.') {
+        /*} else if (c == '.') {
             token->type = POINT;
             if (init_token(c, token)) {
                 return INTERNAL_ERROR;
             } else {
                 parser_function(token);
                 c = getchar();
-            }
+            }*/
 
         // token ;
         } else if (c == ';') {
@@ -448,10 +442,8 @@ int get_next_token(Token *token, FILE *f) {
             if (c == '/') {
                 c = getchar();
                 while (c != EOL) {
-                    printf("%c", c);
                     c = getchar();
                 }
-                printf("\n");
                 free_token(token);
                 continue;
             // start block comment               
@@ -506,13 +498,52 @@ int get_next_token(Token *token, FILE *f) {
             if (init_token(c, token)) {
                 return INTERNAL_ERROR;
             }
-            while ((c = getchar()) != '"') {
+            c = getchar();
+            while (c != '"') {
                 if (c == EOF || c == EOL) {
                     return LEXICAL_ERROR;                         
                 } else {
-                    if (expand_token(c, token)) {
+                    if (c == '\\') {
+                        if (expand_token(c, token)) {
                         return INTERNAL_ERROR;
+                        }
+                        c = getchar();
+                        if ((c == '"') || (c == 'n') || (c == 't') || (c == '\\')) {
+                            if (expand_token(c, token)) {
+                                return INTERNAL_ERROR;
+                            }
+                            c = getchar();
+                            continue;
+                        } else if (c == 'x') {
+                            if (expand_token(c, token)) {
+                                return INTERNAL_ERROR;
+                            }
+                            c = getchar();
+                            if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f')) {
+                                if (expand_token(c, token)) {
+                                    return INTERNAL_ERROR;
+                                }
+                                c = getchar();
+                                if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f')) {
+                                    if (expand_token(c, token)) {
+                                        return INTERNAL_ERROR;
+                                    }
+                                    c = getchar();
+                                    continue;
+                                } else {
+                                    return LEXICAL_ERROR;
+                                }
+                            } else {
+                                return LEXICAL_ERROR;
+                            }
+                        } else {
+                            return LEXICAL_ERROR;
+                        }
                     } else {
+                        if (expand_token(c, token)) {
+                            return INTERNAL_ERROR;
+                        }
+                        c = getchar();
                         continue;
                     }
                 }
@@ -573,6 +604,7 @@ int get_next_token(Token *token, FILE *f) {
                        c == '&' || 
                        c == EOL ||
                        isspace(c)) {
+                        token->type = INTEGER;
                         parser_function(token);
 
             } else {
@@ -642,8 +674,9 @@ int get_next_token(Token *token, FILE *f) {
             c = getchar();
         } else if (isspace(c)) {
             c = getchar();
+        } else {
+            return LEXICAL_ERROR;
         }
     }
     return 0;
 }
-
