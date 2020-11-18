@@ -10,4 +10,4 @@ all:
 	$(CC) $(CFLAGS) -o compiler main.o scanner.o parser.o token_dll.o symtable.o
 	
 clean:
-	rm -rf $(EXECUTABLE) *.o *.out
+	rm -rf compiler *.o *.out
