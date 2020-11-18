@@ -1,0 +1,627 @@
+#include "token_dll.h"
+#include "symtable.h"
+#include "error.h"
+
+#include <stdbool.h>
+#include <string.h>
+
+int expression_rule(Token *token);
+int statement_rule(Token *token);
+int assignment_rule(Token *token);
+
+void get_next_token(Token *token) {
+    token = &token_list.Act->token;
+    DLSucc(&token_list);
+}
+
+
+
+/*  TYPE -> int
+    TYPE -> float64
+    TYPE -> string
+*/
+int type_rule(Token *token) {
+    get_next_token(token);
+    if (token->type == INT) {
+
+    }
+    else if (token->type == FLOAT64) {
+
+    }
+    else if (token->type == STRING) {
+
+    }
+    else {
+        return SYNTAX_ERROR;
+    }
+    
+    return 0;
+}
+
+/*  TYPE_NEXT -> , TYPE TYPE_NEXT
+    TYPE_NEXT -> )
+*/
+int type_next_rule(Token *token) {
+    get_next_token(token);
+
+    if (token->type == ROUND_BR_R) {
+        return 0;
+    }
+
+    if (token->type != COMMA) {
+        return SYNTAX_ERROR;
+    }
+
+    int retval = type_rule(token);
+    if (retval) {
+        return retval;
+    }
+
+    retval = type_next_rule(token);
+    return retval;    
+}
+
+/*  RETURN_TYPES -> {
+    RETURN_TYPES -> ( TYPE TYPE_NEXT {
+    RETURN_TYPES -> TYPE {
+*/
+int return_types_rule(Token *token) {
+    int retval = 0;
+    get_next_token(token);
+
+    if (token->type == CURLY_BR_L) {
+        return 0;
+    }
+
+    if (token->type == ROUND_BR_L) {
+        retval = type_rule(token);
+        if (retval) {
+            return retval;
+        }
+
+        retval = type_next_rule(token);
+        if (retval) {
+            return retval;
+        }
+
+        get_next_token(token);
+        if (token->type != CURLY_BR_L) {
+            return SYNTAX_ERROR;
+        }
+        return 0;
+    }
+
+    retval = type_rule(token);
+    if (retval) {
+        return retval;
+    }
+    get_next_token(token);
+    if (token->type != CURLY_BR_L) {
+        return SYNTAX_ERROR;
+    }
+
+    return 0;
+}
+
+/*  PARAM_NEXT -> )
+    PARAM_NEXT -> , id TYPE PARAM_NEXT
+*/
+int param_next_rule(Token *token) {
+    get_next_token(token);
+    if (token->type == ROUND_BR_R) {
+        return 0;
+    }
+
+    if (token->type != COMMA) {
+        return SYNTAX_ERROR;
+    }
+
+    get_next_token(token);
+    if (token->type != ID) {
+        return SYNTAX_ERROR;
+    }
+
+    // send to hashtable
+
+    int retval = type_rule(token);
+    if (retval) {
+        return retval;
+    }
+
+    retval = param_next_rule(token);
+    return retval;
+}
+
+/*  PARAM -> )
+    PARAM -> id TYPE PARAM_NEXT
+*/
+int param_rule(Token *token) {
+    get_next_token(token);
+    if (token->type == ROUND_BR_R) {
+        return 0;
+    }
+
+    if (token->type != ID) {
+        return SYNTAX_ERROR;
+    }
+
+    int retval = type_rule(token);
+    if (retval) {
+        return retval;
+    }
+
+    retval = param_next_rule(token);
+    return retval;
+}
+
+/*  EXPR_NEXT -> , EXPR EXPR_NEXT
+    EXPR_NEXT -> eps
+*/
+int expr_next_rule(Token *token) {
+    get_next_token(token);
+
+    if (token->type == END_OF_LINE) {
+        DLPred(&token_list);
+        return 0;
+    }
+
+    if (token->type != COMMA) {
+        return SYNTAX_ERROR;
+    }
+
+    int retval = expression_rule(token);
+    if (retval) {
+        return retval;
+    }
+
+    retval = expr_next_rule(token);
+    return retval;
+}
+
+/*  VARS -> eps
+    VARS -> EXPR EXPR_NEXT
+*/
+int vars_rule(Token *token) {
+    get_next_token(token);
+    if (token->type == END_OF_LINE){
+        DLPred(&token_list);
+        return 0;
+    }
+
+    int retval = expression_rule(token);
+    if (retval) {
+        return retval;
+    }
+
+    retval = expr_next_rule(token);
+    if (retval) {
+        return retval;
+    }
+
+    return 0;
+}
+
+
+/*  ELSE -> else { eol STATEMENT } eol
+    ELSE -> eol
+*/
+int else_rule(Token *token) {
+    get_next_token(token);
+
+    if (token->type == END_OF_LINE) {
+        return 0;
+    }
+
+    if (token->type != ELSE) {
+        return SYNTAX_ERROR;
+    }
+
+    get_next_token(token);
+    if (token->type != CURLY_BR_L) {
+        return SYNTAX_ERROR;
+    }
+
+    get_next_token(token);
+    if (token->type != END_OF_LINE) {
+        return SYNTAX_ERROR;
+    }
+
+    int retval = statement_rule(token);
+    if (retval) {
+        return retval;
+    }
+
+    get_next_token(token);
+    if (token->type != CURLY_BR_R) {
+        return SYNTAX_ERROR;
+    }
+
+    get_next_token(token);
+    if (token->type != END_OF_LINE) {
+        return SYNTAX_ERROR;
+    }
+
+    return 0;
+}
+
+/*  FOR_FIRST -> ;
+    FOR_FIRST -> ASSIGNMENT ;
+*/
+int for_first_rule(Token *token) {
+    get_next_token(token);
+
+    if (token->type == SEMICOLON) {
+        return 0;
+    }
+
+    int retval = assignment_rule(token);
+    if (retval) {
+        return retval;
+    }
+
+    get_next_token(token);
+    if (token->type != SEMICOLON) {
+        return SYNTAX_ERROR;
+    }
+
+    return 0;
+}
+
+/*  FOR_LAST -> ε
+    FOR_LAST -> id eq_sign EXPR
+*/
+int for_last_rule(Token *token) {
+    if (token->type == ID) {
+        get_next_token(token);
+        if (token->type != EQ_SYM) {
+            return SYNTAX_ERROR;
+        }
+
+        int retval = expression_rule(token);
+        if (retval) {
+            return retval;
+        }
+        return 0;
+    }
+
+    DLPred(&token_list);
+    return 0;
+}
+
+/*  ASSIGN_SYM -> declare
+    ASSIGN_SYM -> eq_sign
+*/
+int assign_sym_rule(Token *token) {
+    get_next_token(token);
+
+    if (token->type == DECLARE || token->type == EQ_SYM) {
+        return 0;
+    }
+    return SYNTAX_ERROR;
+}
+
+/*  ID_NEXT -> , id ID_NEXT
+    ID_NEXT -> ε
+*/
+int id_next_rule(Token *token) {
+    get_next_token(token);
+
+    if (token->type == COMMA) {
+        get_next_token(token);
+        if (token->type != ID) {
+            return SYNTAX_ERROR;
+        }
+        return id_next_rule(token);
+    }
+
+    return 0;
+}
+
+
+/*  ASSIGNMENT -> ( EXPR EXPR_NEXT )                  --- FUNC_CALL
+    ASSIGNMENT -> ID_NEXT ASSIGN_SYM EXPR EXPR_NEXT    --- DECLARATION, ASSIGNMENT
+*/
+int assignment_rule(Token *token) {
+    int retval = 0;
+    get_next_token(token);
+
+    if (token->type == ROUND_BR_L) {
+        get_next_token(token);
+
+        if (token->type == ROUND_BR_R) {
+            return 0;
+        }
+        else {
+            DLPred(&token_list);
+
+            retval = expression_rule(token);
+            if (retval) {
+                return retval;
+            }
+
+            retval = expr_next_rule(token);
+            if (retval) {
+                return retval;
+            }
+
+            get_next_token(token);
+            if (token->type != ROUND_BR_R) {
+                return SYNTAX_ERROR;
+            }
+        }
+    }
+    else {
+        DLPred(&token_list);
+        retval = id_next_rule(token);
+        if (retval) {
+            return retval;
+        }
+
+        retval = assign_sym_rule(token);
+        if (retval) {
+            return retval;
+        }
+
+        retval = expression_rule(token);
+        if (retval) {
+            return retval;
+        }
+
+        return expr_next_rule(token);
+    }
+    return 0;
+}
+
+
+/*  
+STATEMENT -> if EXPR { eol STATEMENT } ELSE STATEMENT
+STATEMENT -> for FOR_FIRST ; EXPR ; FOR_LAST { eol STATEMENT } eol STATEMENT
+STATEMENT -> return VARS eol STATEMENT
+STATEMENT -> id ASSIGNMENT eol STATEMENT
+*/
+int statement_rule(Token *token) {
+    int retval = 0;
+    get_next_token(token);
+
+    if (token->type == IF) {
+        retval = expression_rule(token);
+        if (retval) {
+            return retval;
+        }
+
+        get_next_token(token);
+        if (token->type != CURLY_BR_L) {
+            return SYNTAX_ERROR;
+        }
+
+        get_next_token(token);
+        if (token->type != END_OF_LINE) {
+            return SYNTAX_ERROR;
+        }
+
+        retval = statement_rule(token);
+        if (retval) {
+            return retval;
+        }
+
+        get_next_token(token);
+        if (token->type != CURLY_BR_R) {
+            return SYNTAX_ERROR;
+        }
+
+        retval = else_rule(token);
+        if (retval) {
+            return retval;
+        }
+
+        retval = statement_rule(token);
+        if (retval) {
+            return retval;
+        }
+    }
+    else if (token->type == FOR) {
+        retval = for_first_rule(token);
+        if (retval) {
+            return retval;
+        }
+
+        retval = expression_rule(token);
+        if (retval) {
+            return retval;
+        }
+
+        get_next_token(token);
+        if (token->type != SEMICOLON) {
+            return SYNTAX_ERROR;
+        }
+
+        get_next_token(token);
+        retval = for_last_rule(token);
+        if (retval) {
+            return retval;
+        }
+
+        get_next_token(token);
+        if (token->type != CURLY_BR_L) {
+            return SYNTAX_ERROR;
+        }
+
+        get_next_token(token);
+        if (token->type != END_OF_LINE) {
+            return SYNTAX_ERROR;
+        }
+
+        retval = statement_rule(token);
+        if (retval) {
+            return retval;
+        }
+
+        get_next_token(token);
+        if (token->type != CURLY_BR_R) {
+            return SYNTAX_ERROR;
+        }
+
+        get_next_token(token);
+        if (token->type != END_OF_LINE) {
+            return SYNTAX_ERROR;
+        }
+
+        retval = statement_rule(token);
+        if (retval) {
+            return retval;
+        }
+    }
+    else if (token->type == ID) {
+        retval = assignment_rule(token);
+        if (retval) {
+            return retval;
+        }
+
+        retval = statement_rule(token);
+        if (retval) {
+            return retval;
+        }
+    }
+    else if (token->type == RETURN) {
+        retval = vars_rule(token);
+        if (retval) {
+            return retval;
+        }
+
+        get_next_token(token);
+        if (token->type != END_OF_LINE) {
+            return SYNTAX_ERROR;
+        }
+
+        retval = statement_rule(token);
+        if (retval) {
+            return retval;
+        }
+    }
+
+    return 0;
+}
+
+
+// FUNC_DEF -> func id_func ( PARAM ) RETURN_TYPES eol STATEMENT } eol
+int func_def_rule(Token *token) {
+    get_next_token(token);
+    if (token->type != FUNC) {
+        return SYNTAX_ERROR;
+    }
+
+    get_next_token(token);
+    if (token->type != ID) {
+        return SYNTAX_ERROR;
+    }
+    token->type = ID_FUNC;
+  /*  FuncNodePtr func_node = malloc(sizeof(struct func_node));
+    if (!func_node) {
+        return INTERNAL_ERROR;
+    }
+    func_node->function_name = token->data;
+*/
+    get_next_token(token);
+    if (token->type != ROUND_BR_L) {
+      //  free(func_node);
+        return SYNTAX_ERROR;
+    }
+
+    if (param_rule(token)) {
+    //        free(func_node);
+        return SYNTAX_ERROR;
+    }
+
+    if (return_types_rule(token)) {
+//        free(func_node);
+        return SYNTAX_ERROR;
+    }
+
+    get_next_token(token);
+    if (token->type != END_OF_LINE) {
+//        free(func_node);
+        return SYNTAX_ERROR;
+    }
+    //DLInsertLast(func_list, func_node, FUNCTYPE);
+
+    int retval = statement_rule(token);
+    if (retval) {
+        return retval;
+    }
+
+    get_next_token(token);
+    if (token->type != CURLY_BR_R) {
+        return SYNTAX_ERROR;
+    }
+
+    get_next_token(token);
+    if (token->type == END_OF_LINE || token_list.Act == token_list.Last) {
+        return 0;
+    }
+    return SYNTAX_ERROR;
+}
+
+// FUNC_DEF_NEXT -> ε
+// FUNC_DEF_NEXT -> FUNC_DEF FUNC_DEF_NEXT
+int func_def_next_rule(Token *token) {
+    if (token_list.Act == token_list.Last) {
+        return 0;
+    }
+
+    int retval = func_def_rule(token);
+    if (retval) {
+        return retval;
+    }
+
+    retval = func_def_next_rule(token);
+    if (retval) {
+        return retval;
+    }
+
+    return 0;
+}
+
+// FUNCTIONS -> FUNC_DEF FUNC_DEF_NEXT
+int functions_rule(Token *token) {
+    int retval = func_def_rule(token);
+    if (retval) {
+        return retval;
+    }
+
+    retval = func_def_next_rule(token);
+    if (retval) {
+        return retval;
+    }
+
+    return 0;
+}
+
+// PCKG -> package id eol
+int package_rule(Token *token) {
+    get_next_token(token);
+    if (token->type != PACKAGE) {
+        return SYNTAX_ERROR;
+    }
+    get_next_token(token);
+    if (!strcmp(token->data, "main")) {
+            return SYNTAX_ERROR;
+    }
+    get_next_token(token);
+    if (token->type != END_OF_LINE) {
+            return SYNTAX_ERROR;
+    }
+    return 0;
+}
+
+// GO -> PCKG FUNCTIONS
+int parse() {
+    Token token;
+    int retval = package_rule(&token);
+
+    if (retval) {
+        return retval;
+    }
+
+    retval = functions_rule(&token);
+    return retval;
+}
