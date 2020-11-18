@@ -3,9 +3,11 @@
 #include <stdbool.h>
 
 #define SYM_TABLE_SIZE 1021
+#define INDEX_SIZE 101
+
 struct Sym_table;
 struct Sym_table_item;
-
+/*
 // Data types
 typedef enum {
     // nil data type
@@ -19,27 +21,22 @@ typedef enum {
     // string data type
     STRING_TYPE
 } Data_type;
-
+*/
 union Data {
-    void *ptr;
-    int i;
-    bool b;
-    float f;
-    char *str;
-} value;  
-
-// Symbol data
-typedef struct {
-    //char *key;  // ID
-    bool declare;   // declare or not
-    Data_type type; // data type of symbol
-    Data value;
-} Data;
+    struct variable {
+        unsigned type;
+    } var;
+    struct function {
+        int *in_var_list;
+        int *out_var_list;
+    } func;
+}; 
 
 // Symbol table item
 typedef struct Sym_table_item {
-    char *key;  // ID
-    Data data; // data
+    char *name;  // name
+    unsigned depth; // glubina
+    union Data value; // data
     struct Sym_table *nextPtr; // ptr to next item
 } Sym_table_item;
 
