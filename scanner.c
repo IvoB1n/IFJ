@@ -1,11 +1,13 @@
 #include "scanner.h"
-
+#include "error.h"
+#include "token_dll.h"
 #define EOL '\n'
 /*
 void print_token (Token *token) {
     printf( "%d, %s, %d\n", token->type, token->data, token->data_size);
 }
 */
+
 int init_token(char c, Token *token) {
     if ((token->data = malloc(sizeof(char)))) {
         token->data[0] = c;
@@ -38,6 +40,7 @@ void parser_function (Token *token) {
     if (expand_token('\0', token)) {
         return;
     }
+    DLInsertLast(&token_list, token);
     free_token(token);
 }
 
