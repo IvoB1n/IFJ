@@ -3,12 +3,13 @@
 #include "symtable.h"
 #include "error.h"
 
+Sym_table_item *search_item(Sym_table *table, char *name, unsigned depth);
 unsigned hash_code(char *name)
 {
     unsigned hashval;
 
     for (hashval = 0; *name != '\0'; name++)
-        hashval = name + 31 * hashval;
+        hashval = *name + 31 * hashval;
     return hashval % SYM_TABLE_SIZE;
 }
 
@@ -60,7 +61,7 @@ int insert_item(Sym_table *table, Sym_table_item *node) {
 
 }
 
-void delete_on_depth(Sym_table *table, char name, unsigned depth) {
+void delete_on_depth(Sym_table *table, unsigned depth) {
     int index = depth * 101;
     Sym_table_item *item_for_delete = (*table)[index];
     Sym_table_item *next_item = NULL;
@@ -101,8 +102,8 @@ void delete_on_depth(Sym_table *table, char name, unsigned depth) {
     }
 }
 
-void delete_item(Sym_table *table, char name, unsigned depth) {
-    int index = hash_code(name);
+void delete_item(Sym_table *table, char* name, unsigned depth) {
+    unsigned index = hash_code(name);
     Sym_table_item *item_for_delete = (*table)[index];
 
     if (item_for_delete == NULL) {
@@ -150,6 +151,7 @@ Sym_table_item *search_item(Sym_table *table, char *name, unsigned depth) {
 
         searching_item = searching_item->nextPtr;
     }
+    return NULL;
 }
 
 void htClearAll(Sym_table *table) {

@@ -1,12 +1,17 @@
 #include "scanner.h"
 #include "error.h"
-#include "token_dll.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
 #define EOL '\n'
-/*
-void print_token (Token *token) {
+
+void print_scan_token (Token *token) {
     printf( "%d, %s, %d\n", token->type, token->data, token->data_size);
 }
-*/
+
 
 int init_token(char c, Token *token) {
     if ((token->data = malloc(sizeof(char)))) {
@@ -31,7 +36,6 @@ int expand_token(char c, Token *token) {
 }
 
 void free_token (Token *token) {
-    free(token->data);
     token->data = NULL;
     token->data_size = 0;
 }
@@ -40,6 +44,7 @@ void parser_function (Token *token) {
     if (expand_token('\0', token)) {
         return;
     }
+     print_scan_token(token);
     DLInsertLast(&token_list, token);
     free_token(token);
 }
@@ -139,7 +144,10 @@ int control_float(Token *token, char *c) {
             case INTERNAL_ERROR: return INTERNAL_ERROR;
             default: return 0;
         }
-    } else if (*c == ';' ||
+    } 
+    parser_function(token);
+    return 0;
+    /*else if (*c == ';' ||
                *c == ',' || 
                *c == '>' ||
                *c == '<' ||
@@ -154,14 +162,15 @@ int control_float(Token *token, char *c) {
                *c == '|' ||
                *c == EOL || 
                *c == '&' ||
+               *c == ')' ||
                isspace(*c)) {
                parser_function(token);
                return 0;
     }
-    return LEXICAL_ERROR;
+    return LEXICAL_ERROR;*/
 }
 
-int get_next_token(Token *token) {
+int scan_token(Token *token) {
     char c = getchar();
     while (c != EOF) {
         // token (
@@ -347,7 +356,7 @@ int get_next_token(Token *token) {
 
         // token ;
         } else if (c == ';') {
-            token->type = COLON;
+            token->type = SEMICOLON;
             if (init_token(c, token)) {
                 return INTERNAL_ERROR;
             } else {
@@ -605,6 +614,7 @@ int get_next_token(Token *token) {
                        c == ' ' || 
                        c == '|' ||
                        c == '&' || 
+                       c == ')' ||
                        c == EOL ||
                        isspace(c)) {
                         token->type = INTEGER;
@@ -665,6 +675,7 @@ int get_next_token(Token *token) {
                        c == ',' ||
                        c == '&' ||
                        c == EOL || 
+                       c == ')' ||
                        isspace(c)) {
                         parser_function(token);
             } else {
@@ -681,5 +692,7 @@ int get_next_token(Token *token) {
             return LEXICAL_ERROR;
         }
     }
+    token->type = END_OF_LINE;
+    parser_function(token);
     return 0;
 }
