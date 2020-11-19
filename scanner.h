@@ -1,24 +1,27 @@
-#include <stdio.h>
-#include "dll.h"
+#include "token_dll.h"
 
 typedef enum {
+    // EXPRESSIONS
+    ADD, SUB, MUL, DIV, ROUND_BR_L, ROUND_BR_R, L, LE, G, GE,
+    EQ, NOT_EQ, I, DOLLAR, SHIFT, REDUCE, EQUAL, NONE,
+    // IDENTIFIRES
     ID, ID_FUNC,
     // NUMBERS
     INTEGER, FLOAT, ZERO_MANTISSA, EXP, EXP_SIGNED, EXP_FINAL_NUM,
     // STRING
     STR, STR_SPEC_SYM, STR_HEX_SYM, STR_HEX_DIGIT_FIRST, STR_END,
     // BRACES
-    ROUND_BR_L, ROUND_BR_R, SQUARE_BR_L, SQUARE_BR_R, CURLY_BR_L, CURLY_BR_R,
+    SQUARE_BR_L, SQUARE_BR_R, CURLY_BR_L, CURLY_BR_R,
     // DECLARATION
     SEMICOLON, DECLARE, 
     // COMPARISON OPERATORS
-    G, GE, L, LE, EQ_SYM, EQ, NOT, NOT_EQ,
+    EQ_SYM,  NOT,
     // BOOLEAN OPERATORS
     AND_SYM, AND, OR_SYM, OR,
     // OTHER SYMBOLS
     COMMA, COLON, POINT,
     // MATH OPERATORS
-    ADD, SUB, MUL, MOD, DIV,
+    MOD,
     // COMMENTS
     COMMENT_STR, COMMENT_BLOCK, COMMENT_BLOCK_END_S, COMMENT_BLOCK_END_F,
     // RESERVED WORDS
@@ -27,9 +30,15 @@ typedef enum {
     END_OF_LINE
 } Token_type;
 
+
+/*
 typedef struct {
     Token_type type;   // type of token
     char *data; //  data of token
     unsigned data_size; // size of token 
 } Token;
+*/
 
+
+void free_token (Token *token);
+int scan_token (Token *token);

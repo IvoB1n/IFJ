@@ -1,6 +1,4 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include"scanner.h"
+//#include"scanner.h"
 
 #define FALSE 0
 #define TRUE 1
@@ -8,6 +6,12 @@
 extern int errflg;
 extern int solved;
 
+
+typedef struct {
+    unsigned type;   // type of token
+    char *data; //  data of token
+    unsigned data_size; // size of token 
+} Token;
 
 typedef struct tDLElem {                 /* prvek dvousměrně vázaného seznamu */ 
         Token token;                                            /* užitečná data */

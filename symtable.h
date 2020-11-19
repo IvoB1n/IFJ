@@ -6,7 +6,7 @@
 #define INDEX_SIZE 101
 
 struct Sym_table;
-struct Sym_table_item;
+// struct Sym_table_item;
 /*
 // Data types
 typedef enum {
@@ -37,7 +37,7 @@ typedef struct Sym_table_item {
     char *name;  // name
     unsigned depth; // glubina
     union Data value; // data
-    struct Sym_table *nextPtr; // ptr to next item
+    struct Sym_table_item *nextPtr; // ptr to next item
 } Sym_table_item;
 
 // Symtable
