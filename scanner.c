@@ -572,9 +572,12 @@ int scan_token(Token *token) {
             token->type = ZERO_MANTISSA;
             if (init_token(c, token)) {
                 return INTERNAL_ERROR;
-            } 
+            }
             c = getchar();
-
+            if (c >= '0' && c <= '9') {
+                return LEXICAL_ERROR;
+            } 
+            
             // token float
             if (c == '.') {
                 if (expand_token(c, token)) {
@@ -600,7 +603,10 @@ int scan_token(Token *token) {
                         default: continue;
                     } 
                 }
-            } else if (c == ';' ||
+                
+            }
+            parser_function(token);
+            /* else if (c == ';' ||
                        c == ',' || 
                        c == '>' ||
                        c == '<' ||
@@ -622,7 +628,7 @@ int scan_token(Token *token) {
 
             } else {
                 return LEXICAL_ERROR;                             
-            }
+            }*/
 
         // token integer 
         } else if (c >= '1' && c <= '9') {
@@ -660,7 +666,10 @@ int scan_token(Token *token) {
                         default: continue;
                     }
                 }
-            } else if (c == ';' || 
+                //c = getchar();
+            }
+                parser_function(token);
+             /* else if (c == ';' || 
                        c == '>' ||
                        c == '<' ||
                        c == '+' ||
@@ -680,7 +689,7 @@ int scan_token(Token *token) {
                         parser_function(token);
             } else {
                 return LEXICAL_ERROR;
-            }
+            }*/
         } else if (c == EOL) {
             
             token->type = END_OF_LINE;
