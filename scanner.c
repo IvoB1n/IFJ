@@ -147,27 +147,6 @@ int control_float(Token *token, char *c) {
     } 
     parser_function(token);
     return 0;
-    /*else if (*c == ';' ||
-               *c == ',' || 
-               *c == '>' ||
-               *c == '<' ||
-               *c == '+' ||
-               *c == '-' || 
-               *c == '*' || 
-               *c == '/' || 
-               *c == '%' ||
-               *c == '!' || 
-               *c == '=' ||
-               *c == ' ' || 
-               *c == '|' ||
-               *c == EOL || 
-               *c == '&' ||
-               *c == ')' ||
-               isspace(*c)) {
-               parser_function(token);
-               return 0;
-    }
-    return LEXICAL_ERROR;*/
 }
 
 int scan_token(Token *token) {
@@ -193,27 +172,6 @@ int scan_token(Token *token) {
                 c = getchar(); 
             }
 
-        // token [
-            
-        /*} else if (c == '[') {
-            token->type = SQUARE_BR_L;
-            if (init_token(c, token)) {
-                return INTERNAL_ERROR;
-            } else {
-                parser_function(token);
-                c = getchar(); 
-            }
-
-        // token ]
-        } else if (c == ']') {
-            token->type = SQUARE_BR_R;
-            if (init_token(c, token)) {
-                return INTERNAL_ERROR;
-            } else {
-                parser_function(token);
-                c = getchar(); 
-            }
-        */
         // token { 
         } else if (c == '{') {
             token->type = CURLY_BR_L;
@@ -343,16 +301,6 @@ int scan_token(Token *token) {
                 parser_function(token);
                 c = getchar();
             }
-
-        // token .
-        /*} else if (c == '.') {
-            token->type = POINT;
-            if (init_token(c, token)) {
-                return INTERNAL_ERROR;
-            } else {
-                parser_function(token);
-                c = getchar();
-            }*/
 
         // token ;
         } else if (c == ';') {
@@ -606,29 +554,6 @@ int scan_token(Token *token) {
                 
             }
             parser_function(token);
-            /* else if (c == ';' ||
-                       c == ',' || 
-                       c == '>' ||
-                       c == '<' ||
-                       c == '+' ||
-                       c == '-' || 
-                       c == '*' || 
-                       c == '/' || 
-                       c == '%' ||
-                       c == '!' || 
-                       c == '=' ||
-                       c == ' ' || 
-                       c == '|' ||
-                       c == '&' || 
-                       c == ')' ||
-                       c == EOL ||
-                       isspace(c)) {
-                        token->type = INTEGER;
-                        parser_function(token);
-
-            } else {
-                return LEXICAL_ERROR;                             
-            }*/
 
         // token integer 
         } else if (c >= '1' && c <= '9') {
@@ -669,27 +594,7 @@ int scan_token(Token *token) {
                 //c = getchar();
             }
                 parser_function(token);
-             /* else if (c == ';' || 
-                       c == '>' ||
-                       c == '<' ||
-                       c == '+' ||
-                       c == '-' || 
-                       c == '*' || 
-                       c == '/' || 
-                       c == '%' ||
-                       c == '!' || 
-                       c == '=' ||
-                       c == ' ' || 
-                       c == '|' ||
-                       c == ',' ||
-                       c == '&' ||
-                       c == EOL || 
-                       c == ')' ||
-                       isspace(c)) {
-                        parser_function(token);
-            } else {
-                return LEXICAL_ERROR;
-            }*/
+             
         } else if (c == EOL) {
             
             token->type = END_OF_LINE;
