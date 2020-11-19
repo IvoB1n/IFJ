@@ -91,6 +91,7 @@ int control_exp(Token *token, char *c) {
                             *c = getchar();
                         }
                     }
+                    token->type = FLOAT;
                     parser_function(token);
                     return 0;
                 }
@@ -111,6 +112,7 @@ int control_exp(Token *token, char *c) {
                     *c = getchar();
                 }
             }
+            token->type = FLOAT;
             parser_function(token);
             return 0;
         }
@@ -553,6 +555,7 @@ int scan_token(Token *token) {
                 }
                 
             }
+            token->type  = INTEGER;
             parser_function(token);
 
         // token integer 
