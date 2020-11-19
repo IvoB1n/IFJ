@@ -27,10 +27,10 @@ test() {
             ./compiler < "$1" >/dev/null
             ret_val=$?
             line=$(head -n 1 $1)
-            echo "return value:      \e[0;36m $ret_val \e[0m   \e[0;36m ///// \e[0m"
-            echo "retvall:\e[0;33m $line \e[0m  \e[0;33m ///// \e[0m" 
+            echo "return value:       \e[0;36m $ret_val \e[0m   \e[0;36m ///// \e[0m"
+            echo "expected:\e[0;33m $line \e[0m  \e[0;33m ///// \e[0m" 
+            echo "                         /"
             echo "                        /"
-            echo "                       /"
 
         else 
             echo "$1"
