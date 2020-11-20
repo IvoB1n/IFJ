@@ -1,8 +1,5 @@
 #include "token_dll.h"
 
-#include<stdio.h>
-#include<stdlib.h>
-
 int solved;
 int errflg;
 
