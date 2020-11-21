@@ -28,7 +28,7 @@ unsigned get_prec_table_rule(unsigned sym1, unsigned sym2) {
 
 void print_exp_list(tDLList *L) {
     tDLElemPtr tmp = L->First;
-    printf("---------------\n");
+    // printf("---------------\n");
     while (tmp != NULL) {
         printf( "type= %-4d\n", tmp->token.type);
         tmp = tmp->rptr;
@@ -40,19 +40,48 @@ void insert_first_by_type(tDLList *L, unsigned type){
     Token token;
 
     token.type = type;
+    token.data = NULL;
+    token.data_size = 0;
+
     DLInsertFirst(L, &token);
 }
 
 void exp_list_dtor(tDLList *EList, tDLList *stack) {
+    printf("%s %d\n", __FILE__, __LINE__);
     DLDisposeList(EList);
-    DLDisposeList(stack);
+    printf("%s %d\n", __FILE__, __LINE__);
+    print_exp_list(stack);
+    // DLDisposeList(stack);
+    printf("%s %d\n", __FILE__, __LINE__);
 }
 
-Token pop(tDLList *L){
-    Token ret_token = L->First->token;
-    DLDeleteFirst (L);
+void exp_list_ctor(tDLList *EList, tDLList *L) {
+    while (L->Act != NULL) {
+        if (L->Act->token.type == END_OF_LINE || L->Act->token.type == SEMICOLON || L->Act->token.type == COMMA) {
+            break;
+        }
+        switch (L->Act->token.type) {
+            case ID:
+            
+            case INTEGER:
+            case FLOAT:
+            case STRING:
+            L->Act->token.type = I;
+            break;
+        };
+        DLInsertLast(EList, &(L->Act->token));
+        L->Act = L->Act->rptr;
+    }
+    Token token;
+    token.type = DOLLAR;
+    token.data = NULL;
+    token.data_size = 0;
+    DLInsertLast(EList, &token);
+}
 
-    return ret_token;
+void pop(tDLList *L){
+    // Token ret_token = L->First->token;
+    DLDeleteFirst (L);
 } 
 
 tDLElemPtr get_non_term(tDLList *L){
@@ -71,7 +100,8 @@ int reduce(tDLList *stack, int stack_size) {
     tDLElemPtr s_token = get_non_term(stack);
     switch(s_token->token.type) {
         case I:       // EXPR -> i
-            if (s_token->rptr->token.type == SHIFT) {
+            printf("case I\n");
+            if (s_token->rptr->token.type == SHIFT && stack_size >= 3) {
                 pop(stack);
                 pop(stack);
                 insert_first_by_type(stack, E);
@@ -126,26 +156,6 @@ int reduce(tDLList *stack, int stack_size) {
     return 0; 
 }
 
-void exp_list_ctor(tDLList *EList, tDLList *L) {
-    while (L->Act != NULL) {
-        if (L->Act->token.type == END_OF_LINE || L->Act->token.type == SEMICOLON || L->Act->token.type == COMMA) {
-            break;
-        }
-        switch (L->Act->token.type) {
-            case ID:
-            case INTEGER:
-            case FLOAT:
-            case STRING:
-            L->Act->token.type = I;
-            break;
-        };
-        DLInsertLast(EList, &(L->Act->token));
-        L->Act = L->Act->rptr;
-    }
-    Token token;
-    token.type = DOLLAR;
-    DLInsertLast(EList, &token);
-}
 
 int expression() {
     printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
@@ -166,7 +176,7 @@ int expression() {
 
     int stack_size = 1;
     do {
-        printf("--start--\n");
+        printf("-----s-----\n");
         // print_exp_list(&L);
         print_exp_list(&stack);
 
@@ -187,6 +197,7 @@ int expression() {
                 stack_size+=2;
                 break;
             case REDUCE:
+                printf("S_SIZE %d\n", stack_size);
                 if(reduce(&stack, stack_size)) {
                     exp_list_dtor(&stack, &L);
                     printf("%s %d\n", __FILE__, __LINE__);
@@ -207,7 +218,9 @@ int expression() {
         print_exp_list(&stack);
     } while (stack.First->token.type != DOLLAR && L.Act->token.type != DOLLAR);
     
+    printf("%s %d\n", __FILE__, __LINE__);
     exp_list_dtor(&stack, &L);
-   
+    printf("%s %d\n", __FILE__, __LINE__);
+
     return 0; 
 }

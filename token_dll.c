@@ -19,9 +19,14 @@ void DLInitList (tDLList *L) {
 void DLDisposeList (tDLList *L) {
     tDLElemPtr element;
 
-    while ((L->First != NULL)) {
+    while (L->First != NULL) {
         element = L->First;
         L->First = element->rptr;
+        if (element) {
+            if (element->token.data) {
+                free(element->token.data);
+            }
+        }
         free(element);
     }
 
@@ -119,6 +124,11 @@ void DLDeleteFirst (tDLList *L) {
             L->First->lptr = NULL;
         }
 
+        if (element) {
+            if (element->token.data) {
+                free(element->token.data);
+            }
+        }
         free(element);
     }
 }	
@@ -143,6 +153,11 @@ void DLDeleteLast (tDLList *L) {
             L->Last->rptr = NULL;
         }
 
+        if (element) {
+            if (element->token.data) {
+                free(element->token.data);
+            }
+        }
         free(element);
     }
 }
@@ -163,6 +178,11 @@ void DLPostDelete (tDLList *L) {
             element->rptr->lptr = L->Act;
         }
 
+        if (element) {
+            if (element->token.data) {
+                free(element->token.data);
+            }
+        }
         free(element);
     }
 }
@@ -183,6 +203,11 @@ void DLPreDelete (tDLList *L) {
             element->lptr->rptr = L->Act;
         }
 
+        if (element) {
+            if (element->token.data) {
+                free(element->token.data);
+            }
+        }
         free(element);
     }
 }

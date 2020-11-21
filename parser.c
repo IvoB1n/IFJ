@@ -1,6 +1,7 @@
 #include "scanner.h"
-#include "symtable.h"
 #include "error.h"
+#include "symtable.h"
+#include "expression.h"
 
 #include <stdbool.h>
 #include <string.h>
@@ -37,12 +38,6 @@ void get_next_token(Token *token) {
 
 }
 
-int ivo_expr(Token *token) {
-    printf("%s %d\n", __FILE__, __LINE__);
-    get_next_token(token);
-    return 0;
-}
-
 int expression_rule(Token *token) {
     get_next_token(token);
     printf("%s %d\n", __FILE__, __LINE__);
@@ -63,8 +58,8 @@ int expression_rule(Token *token) {
     }
 printf("%s %d\n", __FILE__, __LINE__);
     DLPred(&token_list);
-    ivo_expr(token);
-    return 0;
+   // return 0;
+    return expression();
 }
 
 /*  TYPE -> int
@@ -181,8 +176,6 @@ int param_next_rule(Token *token) {
         return SYNTAX_ERROR;
     }
 
-    // send to hashtable
-
     int retval = type_rule(token);
     if (retval) {
         return retval;
@@ -220,11 +213,6 @@ int param_rule(Token *token) {
 int expr_next_rule(Token *token) {
     get_next_token(token);
 
- /*   if (token->type == END_OF_LINE) {
-    
-        DLPred(&token_list);
-        return 0;
-    }*/
 printf("%s %d\n", __FILE__, __LINE__);
     if (token->type == COMMA) {
     
@@ -432,7 +420,6 @@ printf("%s %d\n", __FILE__, __LINE__);
 */
 int assignment_rule(Token *token) {
     int retval = 0;
-    //get_next_token(token);
 
     retval = func_call(token);
     if (retval == FUNC_CALL) {
@@ -451,18 +438,14 @@ int assignment_rule(Token *token) {
 
         retval = assign_sym_rule(token);
         
-
         if (retval) {
             return retval;
         }
-
 
         retval = expression_rule(token);
         if (retval) {
             return retval;
         }
-
-
         return expr_next_rule(token);
     }
 
@@ -640,7 +623,6 @@ printf("%s %d\n", __FILE__, __LINE__);
 // FUNC_DEF -> func id_func ( PARAM ) RETURN_TYPES eol STATEMENT } eol
 int func_def_rule(Token *token) {
 
-   // get_next_token(token);
     if (token->type != FUNC) {
         return SYNTAX_ERROR;
     }
@@ -650,38 +632,28 @@ int func_def_rule(Token *token) {
         return SYNTAX_ERROR;
     }
     token->type = ID_FUNC;
-  /*  FuncNodePtr func_node = malloc(sizeof(struct func_node));
-    if (!func_node) {
-        return INTERNAL_ERROR;
-    }
-    func_node->function_name = token->data;
-*/
 
     get_next_token(token);
     if (token->type != ROUND_BR_L) {
-      //  free(func_node);
+
         return SYNTAX_ERROR;
     }
 
 
     if (param_rule(token)) {
-    //        free(func_node);
         return SYNTAX_ERROR;
     }
 
 
     if (return_types_rule(token)) {
-//        free(func_node);
         return SYNTAX_ERROR;
     }
 
 
     get_next_token(token);
     if (token->type != END_OF_LINE) {
-//        free(func_node);
         return SYNTAX_ERROR;
     }
-    //DLInsertLast(func_list, func_node, FUNCTYPE);
 
 printf("%s %d\n", __FILE__, __LINE__);
     int retval = statement_rule(token);
@@ -690,20 +662,14 @@ printf("%s %d\n", __FILE__, __LINE__);
         return retval;
     }
 
-
-
     get_next_token(token);
-
     if (token->type != CURLY_BR_R) {
         return SYNTAX_ERROR;
     }
 
 
     get_next_token(token);
-
     if (token->type == END_OF_LINE || token_list.Act == token_list.Last) {
-    
-
         return 0;
     }
     return SYNTAX_ERROR;
@@ -782,7 +748,8 @@ int package_rule(Token *token) {
 // GO -> PCKG FUNCTIONS
 int parse() {
     Token token;
-
+    token.data = NULL;
+    token.data_size = 0;
 
     do {
         get_next_token(&token);

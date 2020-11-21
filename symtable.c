@@ -23,28 +23,6 @@ void init_sym_table(Sym_table *table) {
     }
 }
 
-
-void free_sym_table(Sym_table *table) {
-    if (table == NULL) {
-        return;
-    }
-
-    Sym_table_item *item;
-    Sym_table_item *item_for_delete;
-    
-    for (int i = 0; i < SYM_TABLE_SIZE; i++) {
-        item = (*table)[i];
-
-        while (item != NULL) {
-            item_for_delete = item;
-            item = item_for_delete->nextPtr;
-            free(item_for_delete);
-        }
-
-        (*table)[i] = NULL;
-    }
-}
-
 int insert_item(Sym_table *table, Sym_table_item *node) {
     Sym_table_item *item = search_item(table, node->name, node->depth);
 
@@ -154,7 +132,7 @@ Sym_table_item *search_item(Sym_table *table, char *name, unsigned depth) {
     return NULL;
 }
 
-void htClearAll(Sym_table *table) {
+void sym_table_clear_all(Sym_table *table) {
 	Sym_table_item *item;
 	Sym_table_item *deleted_item;
 	for (int i = 0; i < SYM_TABLE_SIZE; i++) {

@@ -22,7 +22,7 @@ search() {
 }
 
 test() {
-        if [ $less_flag = "-l" ]; then
+        if [ "$less_flag" = "-l" ]; then
             echo "$1"
             ./compiler < "$1" >/dev/null
             ret_val=$?
@@ -34,7 +34,7 @@ test() {
 
         else 
             echo "$1"
-            ./compiler < "$1"
+            ./compiler < "$1" 
             ret_val=$?
             line=$(head -n 1 $1)
             echo "return value:      \e[0;36m $ret_val \e[0m   \e[0;36m ///// \e[0m"
