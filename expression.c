@@ -54,7 +54,9 @@ void exp_list_dtor(tDLList *EList, tDLList *stack) {
     printf("%s %d\n", __FILE__, __LINE__);
 }
 
-void exp_list_ctor(tDLList *EList, tDLList *L) {
+unsigned exp_list_ctor(tDLList *EList, tDLList *L) {
+    unsigned exp_type = 0;
+
     while (L->Act != NULL) {
         if (L->Act->token.type == END_OF_LINE ||
              L->Act->token.type == CURLY_BR_L ||
@@ -64,21 +66,60 @@ void exp_list_ctor(tDLList *EList, tDLList *L) {
         }
         switch (L->Act->token.type) {
             case ID:
-            case STR_END: // TODO: is it right?
+            case STR_END:
             case INTEGER:
             case FLOAT:
-            case STRING:
-            L->Act->token.type = I;
+            exp_type = L->Act->token.type;
             break;
         };
+        // switch (L->Act->token.type) {
+        //     case STR_END:
+        //     case INTEGER:
+        //     case FLOAT:
+        //         exp_type = L->Act->token.type;
+        //         break;
+        // };
         DLInsertLast(EList, &(L->Act->token));
         L->Act = L->Act->rptr;
     }
+    
     Token token;
     token.type = DOLLAR;
     token.data = NULL;
     token.data_size = 0;
     DLInsertLast(EList, &token);
+
+    EList->Act = EList->First;
+    while (EList->Act != NULL) {
+        switch (EList->Act->token.type) {
+            case ID:
+            case STR_END:
+            case INTEGER:
+            case FLOAT:
+                if (EList->Act->token.type != exp_type) {
+                    return SEMANTIC_DATA_TYPES_ERROR;
+                }
+                EList->Act->token.type = I;
+                break;
+        };
+        // switch (EList->Act->token.type) {
+        //     case ID:
+        //         // set_type_for_id in symtable
+        //         // EList->Act->token.type = exp_type
+        //         break;
+        //     case STR_END:
+        //     case INTEGER:
+        //     case FLOAT:
+        //         if (EList->Act->token.type != exp_type) {
+        //             return SEMANTIC_DATA_TYPES_ERROR;
+        //         }
+        //         EList->Act->token.type = I;
+        //         EList->Act = EList->Act->rptr; 
+        //         break;
+        // };
+        EList->Act = EList->Act->rptr; 
+    }
+    return 0;
 }
 
 void pop(tDLList *L){
@@ -180,10 +221,8 @@ int reduce(tDLList *stack, int *stack_size) {
         default:
             return SYNTAX_ERROR; 
     };
-    
     return 0; 
 }
-
 
 int expression() {
     printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
@@ -191,7 +230,11 @@ int expression() {
     DLInitList(&stack);
     tDLList L;
     DLInitList(&L);
-    exp_list_ctor(&L, &token_list);
+    unsigned err = exp_list_ctor(&L, &token_list);
+    if (err) {
+        return err;
+    }
+
     L.Act = L.First;
 
     insert_first_by_type(&stack, DOLLAR);
@@ -199,7 +242,6 @@ int expression() {
     printf("PrintExpList!!1!\n");
     print_exp_list(&L);
     // print_exp_list(&stack);
-    
 
     tDLElemPtr s_token = get_non_term(&stack);
 
@@ -210,7 +252,6 @@ int expression() {
         printf("--start in= %d neterm= %d\n", L.Act->token.type, s_token->token.type);
         // print_exp_list(&L);
         print_exp_list(&stack);
-
 
         unsigned prec_table_rule = get_prec_table_rule(s_token->token.type, L.Act->token.type);
 
