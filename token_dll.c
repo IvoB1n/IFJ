@@ -22,11 +22,17 @@ void DLDisposeList (tDLList *L) {
     while (L->First != NULL) {
         element = L->First;
         L->First = element->rptr;
+      //  fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
         if (element) {
+        //    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
             if (element->token.data) {
                 free(element->token.data);
             }
         }
+     //   fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
         free(element);
     }
 

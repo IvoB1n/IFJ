@@ -133,11 +133,10 @@ Sym_table_item *search_item(Sym_table *table, char *name, unsigned depth) {
 }
 
 void sym_table_clear_all(Sym_table *table) {
-	Sym_table_item *item;
-	Sym_table_item *deleted_item;
+	Sym_table_item *item = NULL;
+	Sym_table_item *deleted_item = NULL;
 	for (int i = 0; i < SYM_TABLE_SIZE; i++) {
 		item = (*table)[i];
-
 		while (item != NULL) {
 			deleted_item = item;
 			item = deleted_item->nextPtr;

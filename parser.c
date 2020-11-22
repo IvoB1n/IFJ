@@ -40,26 +40,26 @@ void get_next_token(Token *token) {
 
 int expression_rule(Token *token) {
     get_next_token(token);
-    printf("%s %d\n", __FILE__, __LINE__);
+    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     int retval = 0;
     if (token->type == ID) {
-        printf("%s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         retval = func_call(token);
         if (retval == FUNC_CALL) {
-            printf("%s %d\n", __FILE__, __LINE__);
+            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             return 0;
         }
         else if (retval) {
-            printf("%s %d\n", __FILE__, __LINE__);
+            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             printf("%d\n", retval);
             return retval;
         }
         DLPred(&token_list);
     }
-printf("%s %d\n", __FILE__, __LINE__);
+fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     DLPred(&token_list);
-   // return 0;
-    return expression();
+    return 0;
+   // return expression();
 }
 
 /*  TYPE -> int
@@ -213,7 +213,7 @@ int param_rule(Token *token) {
 int expr_next_rule(Token *token) {
     get_next_token(token);
 
-printf("%s %d\n", __FILE__, __LINE__);
+fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     if (token->type == COMMA) {
     
         int retval = expression_rule(token);
@@ -224,7 +224,7 @@ printf("%s %d\n", __FILE__, __LINE__);
         retval = expr_next_rule(token);
         return retval;
     }
-printf("%s %d\n", __FILE__, __LINE__);
+fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     DLPred(&token_list);
     return 0;
 }
@@ -239,15 +239,15 @@ int vars_rule(Token *token) {
         
         return 0;
     }
-printf("%s %d\n", __FILE__, __LINE__);
+fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
     int retval = expression_rule(token);
-printf("%s %d\n", __FILE__, __LINE__);
+fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     if (retval) {
         return retval;
     }
 
-printf("%s %d\n", __FILE__, __LINE__);
+fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     retval = expr_next_rule(token);
     if (retval) {
     
@@ -379,7 +379,7 @@ int id_next_rule(Token *token) {
 
 int func_call(Token *token) {
     get_next_token(token);
-printf("%s %d\n", __FILE__, __LINE__);
+fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     int retval = 0;
     if (token->type == ROUND_BR_L) {
         get_next_token(token);
@@ -388,29 +388,29 @@ printf("%s %d\n", __FILE__, __LINE__);
         }
         else {
             DLPred(&token_list);
-        printf("%s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             retval = expression_rule(token);
             if (retval) {
                 return retval;
             }
-    printf("%s %d\n", __FILE__, __LINE__);
+    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             retval = expr_next_rule(token);
             if (retval) {
                 return retval;
             }
-    printf("%s %d\n", __FILE__, __LINE__);
+    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             get_next_token(token);
             if (token->type != ROUND_BR_R) {
-                printf("%s %d\n", __FILE__, __LINE__);  
+                fprintf(stderr, "%s %d\n", __FILE__, __LINE__);  
                 return SYNTAX_ERROR;
             }
-            printf("%s %d\n", __FILE__, __LINE__);
+            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             return FUNC_CALL;
         }
-        printf("%s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         return SYNTAX_ERROR;
     }
-    printf("%s %d\n", __FILE__, __LINE__);
+    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     return 0;
 }
 
@@ -587,24 +587,24 @@ int statement_rule(Token *token) {
         }
     }
     else if (token->type == RETURN) {
-    printf("%s %d\n", __FILE__, __LINE__);
+    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         retval = vars_rule(token);
         if (retval) {
-        printf("%s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             return retval;
         }
-    printf("%s %d\n", __FILE__, __LINE__);
+    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         get_next_token(token);
         if (token->type != END_OF_LINE) {
             return SYNTAX_ERROR;
         }
-    printf("%s %d\n", __FILE__, __LINE__);
+    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         return statement_rule(token);
         if (retval) {
-        printf("%s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             return retval;
         }
-    printf("%s %d\n", __FILE__, __LINE__);
+    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     }
     DLPred(&token_list);
 
@@ -613,7 +613,7 @@ int statement_rule(Token *token) {
     
     } while (token_list.Act != NULL && token->type == END_OF_LINE);
 
-printf("%s %d\n", __FILE__, __LINE__);
+fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
     DLPred(&token_list);
     return 0;
@@ -655,18 +655,20 @@ int func_def_rule(Token *token) {
         return SYNTAX_ERROR;
     }
 
-printf("%s %d\n", __FILE__, __LINE__);
+    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     int retval = statement_rule(token);
-    printf("%s %d\n", __FILE__, __LINE__);
+    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     if (retval) {
         return retval;
     }
+fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
     get_next_token(token);
     if (token->type != CURLY_BR_R) {
         return SYNTAX_ERROR;
     }
 
+fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
     get_next_token(token);
     if (token->type == END_OF_LINE || token_list.Act == token_list.Last) {
@@ -756,18 +758,22 @@ int parse() {
     } while (token_list.Act != NULL && token.type == END_OF_LINE);
     
     int retval = package_rule(&token);
+fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
 
     if (retval) {
         return retval;
     }
+fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
     do {
         get_next_token(&token);
     } while (token_list.Act != NULL && token.type == END_OF_LINE);
+fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
 
     retval =  functions_rule(&token);
+fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
     return retval;
 }

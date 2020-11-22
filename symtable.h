@@ -27,8 +27,8 @@ union Data {
         unsigned type;
     } var;
     struct function {
-        int *in_var_list;
-        int *out_var_list;
+        unsigned *in_var_list;
+        unsigned *out_var_list;
     } func;
 }; 
 
@@ -43,7 +43,7 @@ typedef struct Sym_table_item {
 // Symtable
 typedef Sym_table_item *Sym_table[SYM_TABLE_SIZE];
 
-Sym_table *sym_table;
+Sym_table sym_table;
 
 void init_sym_table(Sym_table *table);
 int insert_item(Sym_table *table, Sym_table_item *node);

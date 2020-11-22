@@ -499,7 +499,7 @@ int scan_token(Token *token) {
             } else {
                 parser_function(token);
             }
-            c = getchar();
+            //c = getchar();
 
 
         // token ID        
