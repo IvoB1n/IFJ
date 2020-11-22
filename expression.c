@@ -50,8 +50,7 @@ void exp_list_dtor(tDLList *EList, tDLList *stack) {
     printf("%s %d\n", __FILE__, __LINE__);
     DLDisposeList(EList);
     printf("%s %d\n", __FILE__, __LINE__);
-    print_exp_list(stack);
-    // DLDisposeList(stack);
+    DLDisposeList(stack);
     printf("%s %d\n", __FILE__, __LINE__);
 }
 
@@ -62,7 +61,6 @@ void exp_list_ctor(tDLList *EList, tDLList *L) {
         }
         switch (L->Act->token.type) {
             case ID:
-            
             case INTEGER:
             case FLOAT:
             case STRING:
@@ -100,7 +98,6 @@ int reduce(tDLList *stack, int stack_size) {
     tDLElemPtr s_token = get_non_term(stack);
     switch(s_token->token.type) {
         case I:       // EXPR -> i
-            printf("case I\n");
             if (s_token->rptr->token.type == SHIFT && stack_size >= 3) {
                 pop(stack);
                 pop(stack);
@@ -120,11 +117,13 @@ int reduce(tDLList *stack, int stack_size) {
         case GE:      // EXPR -> EXPR >= EXPR
         case EQ:      // EXPR -> EXPR == EXPR
         case NOT_EQ:  // EXPR -> EXPR != EXPR
+            // printf("FFUUUUUUUUUUUUUNCK CALLL");
             if (stack_size >= 3) {
                 if (stack->First->token.type == E && stack->First->rptr->rptr->token.type == E) {
                     pop(stack);
                     pop(stack);
                     pop(stack);
+                    pop(stack); // kostyl
                     insert_first_by_type(stack, E);
                     stack_size-=2;
                 } else {
@@ -141,7 +140,7 @@ int reduce(tDLList *stack, int stack_size) {
                     pop(stack);
                     pop(stack);
                     insert_first_by_type(stack, E);
-                    stack_size-=2;
+                    stack_size-=3;
                 } else {
                     return SYNTAX_ERROR;
                 }
@@ -168,7 +167,8 @@ int expression() {
 
     insert_first_by_type(&stack, DOLLAR);
 
-    // print_exp_list(&L);
+    printf("PrintExpList!!1!\n");
+    print_exp_list(&L);
     // print_exp_list(&stack);
     
 
@@ -176,11 +176,12 @@ int expression() {
 
     int stack_size = 1;
     do {
-        printf("-----s-----\n");
+        printf("%s %d\n", __FILE__, __LINE__);
+
+        printf("--start in= %d neterm= %d\n", L.Act->token.type, s_token->token.type);
         // print_exp_list(&L);
         print_exp_list(&stack);
 
-        s_token = get_non_term(&stack);
 
         unsigned prec_table_rule = get_prec_table_rule(s_token->token.type, L.Act->token.type);
 
@@ -191,7 +192,15 @@ int expression() {
                 stack_size++;
                 break;
             case SHIFT:
-                insert_first_by_type(&stack, SHIFT);
+                stack.Act = s_token;
+                // insert_first_by_type(&stack, SHIFT);
+                Token token;
+                token.type = SHIFT;
+                token.data = NULL;
+                token.data_size = 0;
+
+                DLPreInsert (&stack, &token);
+
                 DLInsertFirst(&stack, &L.Act->token);
                 L.Act = L.Act->rptr;
                 stack_size+=2;
@@ -200,27 +209,28 @@ int expression() {
                 printf("S_SIZE %d\n", stack_size);
                 if(reduce(&stack, stack_size)) {
                     exp_list_dtor(&stack, &L);
-                    printf("%s %d\n", __FILE__, __LINE__);
+                    // printf("%s %d\n", __FILE__, __LINE__);
                     return SYNTAX_ERROR;
                 }
                 break;
             case NONE:
                 exp_list_dtor(&stack, &L);
-                printf("%s %d\n", __FILE__, __LINE__);
+                // printf("%s %d\n", __FILE__, __LINE__);
                 return SYNTAX_ERROR;
             default:
                 exp_list_dtor(&stack, &L);
-                printf("%s %d\n", __FILE__, __LINE__);
+                // printf("%s %d\n", __FILE__, __LINE__);
                 return SYNTAX_ERROR;
         };
-        printf("--end--\n");
-        // print_exp_list(&L);
+        printf("--end-- next= %d\n", L.Act->token.type);
         print_exp_list(&stack);
-    } while (stack.First->token.type != DOLLAR && L.Act->token.type != DOLLAR);
+        
+        s_token = get_non_term(&stack);
+        printf("stack.F= %d  L.Act= %d\n", stack.First->token.type, L.Act->token.type);
+    } while ((s_token->token.type != DOLLAR) || (L.Act->token.type != DOLLAR));
     
     printf("%s %d\n", __FILE__, __LINE__);
     exp_list_dtor(&stack, &L);
-    printf("%s %d\n", __FILE__, __LINE__);
 
     return 0; 
 }
