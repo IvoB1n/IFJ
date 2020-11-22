@@ -56,11 +56,15 @@ void exp_list_dtor(tDLList *EList, tDLList *stack) {
 
 void exp_list_ctor(tDLList *EList, tDLList *L) {
     while (L->Act != NULL) {
-        if (L->Act->token.type == END_OF_LINE || L->Act->token.type == SEMICOLON || L->Act->token.type == COMMA) {
+        if (L->Act->token.type == END_OF_LINE ||
+             L->Act->token.type == CURLY_BR_L ||
+              L->Act->token.type == SEMICOLON ||
+                  L->Act->token.type == COMMA) {
             break;
         }
         switch (L->Act->token.type) {
             case ID:
+            case STR_END: // TODO: is it right?
             case INTEGER:
             case FLOAT:
             case STRING:
@@ -94,15 +98,29 @@ tDLElemPtr get_non_term(tDLList *L){
    return non_term;
 }
 
-int reduce(tDLList *stack, int stack_size) {
+int count_active_non_terms(tDLList *L){
+    tDLElemPtr non_term = L->First;
+    int count = 0;
+    while(non_term != NULL){
+        if (non_term->token.type == SHIFT) {
+            break;
+        } else {
+            count++;
+            non_term = non_term->rptr;
+        }
+    }
+   return count;
+}
+
+int reduce(tDLList *stack, int *stack_size) {
     tDLElemPtr s_token = get_non_term(stack);
     switch(s_token->token.type) {
         case I:       // EXPR -> i
-            if (s_token->rptr->token.type == SHIFT && stack_size >= 3) {
+            if (s_token->rptr->token.type == SHIFT && *stack_size >= 3) {
                 pop(stack);
                 pop(stack);
                 insert_first_by_type(stack, E);
-                stack_size--;
+                *stack_size-=1;
             } else {
                 return SYNTAX_ERROR;
             }
@@ -118,14 +136,24 @@ int reduce(tDLList *stack, int stack_size) {
         case EQ:      // EXPR -> EXPR == EXPR
         case NOT_EQ:  // EXPR -> EXPR != EXPR
             // printf("FFUUUUUUUUUUUUUNCK CALLL");
-            if (stack_size >= 3) {
-                if (stack->First->token.type == E && stack->First->rptr->rptr->token.type == E) {
+            if (count_active_non_terms(stack) == 3) {
+                if (s_token->lptr->token.type == E && s_token->rptr->token.type == E) {
                     pop(stack);
                     pop(stack);
                     pop(stack);
                     pop(stack); // kostyl
                     insert_first_by_type(stack, E);
-                    stack_size-=2;
+                    *stack_size-=3;
+                } else {
+                    return SYNTAX_ERROR;
+                }
+            } else if (count_active_non_terms(stack) == 2 && s_token->lptr != NULL) {
+                if (s_token->lptr->token.type == E && s_token->rptr->token.type == SHIFT) {
+                    pop(stack);
+                    pop(stack);
+                    pop(stack); // kostyl
+                    insert_first_by_type(stack, E);
+                    *stack_size-=2;
                 } else {
                     return SYNTAX_ERROR;
                 }
@@ -134,13 +162,14 @@ int reduce(tDLList *stack, int stack_size) {
             }
             break;
         case ROUND_BR_R: // EXPR -> (EXPR)
-            if (stack_size >= 3) {
+            if (*stack_size >= 3) {
                 if (stack->First->rptr->token.type == E && stack->First->rptr->rptr->token.type == ROUND_BR_L) {
                     pop(stack);
                     pop(stack);
                     pop(stack);
+                    pop(stack);
                     insert_first_by_type(stack, E);
-                    stack_size-=3;
+                    *stack_size-=3;
                 } else {
                     return SYNTAX_ERROR;
                 }
@@ -207,7 +236,7 @@ int expression() {
                 break;
             case REDUCE:
                 printf("S_SIZE %d\n", stack_size);
-                if(reduce(&stack, stack_size)) {
+                if(reduce(&stack, &stack_size)) {
                     exp_list_dtor(&stack, &L);
                     // printf("%s %d\n", __FILE__, __LINE__);
                     return SYNTAX_ERROR;
