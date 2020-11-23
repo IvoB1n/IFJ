@@ -2,5 +2,5 @@
 package main
 
 func main () {
-	return
+	return abc(a)
 }
