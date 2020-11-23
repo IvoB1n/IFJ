@@ -496,10 +496,10 @@ int scan_token(Token *token) {
                     }
                 }
                 free(token->data);
+                c = getchar();
             } else {
                 parser_function(token);
             }
-            //c = getchar();
 
 
         // token ID        

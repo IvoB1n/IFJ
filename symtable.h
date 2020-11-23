@@ -28,7 +28,9 @@ union Data {
     } var;
     struct function {
         unsigned *in_var_list;
+        unsigned num_in_var;
         unsigned *out_var_list;
+        unsigned num_out_var;
     } func;
 }; 
 

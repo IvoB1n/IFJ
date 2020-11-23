@@ -18,22 +18,23 @@ void DLInitList (tDLList *L) {
 
 void DLDisposeList (tDLList *L) {
     tDLElemPtr element;
+    if (L->First) {
+        while (L->First != NULL) {
+            element = L->First;
+            L->First = element->rptr;
+        //  fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
-    while (L->First != NULL) {
-        element = L->First;
-        L->First = element->rptr;
-      //  fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+            if (element) {
+            //    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
-        if (element) {
-        //    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-
-            if (element->token.data) {
-                free(element->token.data);
+                if (element->token.data) {
+                    free(element->token.data);
+                }
             }
-        }
-     //   fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+        //   fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
-        free(element);
+            free(element);
+        }
     }
 
     L->Last = NULL;

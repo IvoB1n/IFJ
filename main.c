@@ -25,8 +25,8 @@ int main() {
 
     int retval = scan_token(&scantoken);
     if (retval) {
-        // fprintf(stderr, "Lexical error occured\n");
         free_token(&scantoken);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         clean_resources();
         return retval;
     }
@@ -34,6 +34,7 @@ int main() {
     token_list.Act = token_list.First;
     retval = fill_function_prototype_list();
     if (retval) {
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         clean_resources();
         return retval;
     }
@@ -45,8 +46,6 @@ int main() {
 
     if (retval) {
         fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-
-        // fprintf(stderr, "Syntax error\n");
         clean_resources();
         return retval;
     }

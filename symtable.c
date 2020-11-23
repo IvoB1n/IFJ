@@ -59,7 +59,6 @@ void delete_on_depth(Sym_table *table, unsigned depth) {
                 free(item_for_delete->value.func.out_var_list);
                 free(item_for_delete);
 
-                printf("Deleted index - %d\n", i);
                 item_for_delete = next_item;
             }
         }
@@ -73,7 +72,6 @@ void delete_on_depth(Sym_table *table, unsigned depth) {
                 free(item_for_delete->value.func.out_var_list);
                 free(item_for_delete);
 
-                printf("Deleted index - %d\n", i);
                 item_for_delete = next_item;
             }
         }
@@ -140,10 +138,35 @@ void sym_table_clear_all(Sym_table *table) {
 		while (item != NULL) {
 			deleted_item = item;
 			item = deleted_item->nextPtr;
-            free(deleted_item->name);
-            free(deleted_item->value.func.in_var_list);
-            free(deleted_item->value.func.out_var_list);
-			free(deleted_item);
+
+            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+            if (deleted_item->name) {
+                printf("name: %s\n", deleted_item->name);
+                free(deleted_item->name);
+            }
+
+            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+         //   printf("insize: %u\n", deleted_item->value.func.num_in_var);
+            if (deleted_item->value.func.num_in_var > 0) {
+                for (unsigned i = 0; i < deleted_item->value.func.num_in_var; i++) {
+         //           printf("in_var: %d\n", deleted_item->value.func.in_var_list[i]);
+                }    
+                free(deleted_item->value.func.in_var_list);
+            }
+            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+              printf("outsize: %u\n", deleted_item->value.func.num_out_var);
+            if (deleted_item->value.func.num_out_var > 0) {
+                for (unsigned i = 0; i < deleted_item->value.func.num_out_var; i++) {
+          //          printf("out_var: %d\n", deleted_item->value.func.out_var_list[i]);
+                }
+                free(deleted_item->value.func.out_var_list);
+            }
+            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+            if (deleted_item) {
+         //       fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+			    free(deleted_item);
+            }
+         //   fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 		}
 		(*table)[i] = NULL;
 	}

@@ -57,8 +57,9 @@ int expression_rule(Token *token) {
         DLPred(&token_list);
     }
 fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-    DLPred(&token_list);
+  
     return 0;
+    //  DLPred(&token_list);
    // return expression();
 }
 
@@ -68,6 +69,7 @@ fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 */
 int type_rule(Token *token) {
     get_next_token(token);
+
     if (token->type == INT) {
 
     }
@@ -351,12 +353,10 @@ int for_last_rule(Token *token) {
 int assign_sym_rule(Token *token) {
     get_next_token(token);
 
-
     if (token->type == DECLARE || token->type == EQ_SYM) {
         return 0;
     }
     
-
     return SYNTAX_ERROR;
 }
 
@@ -431,6 +431,7 @@ int assignment_rule(Token *token) {
     else {
         
         DLPred(&token_list);
+        
         retval = id_next_rule(token);
         if (retval) {
             return retval;
@@ -659,6 +660,7 @@ int func_def_rule(Token *token) {
     int retval = statement_rule(token);
     fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     if (retval) {
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         return retval;
     }
 fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
