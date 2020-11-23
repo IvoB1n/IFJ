@@ -18,7 +18,7 @@ void DLInitList (tDLList *L) {
 
 void DLDisposeList (tDLList *L) {
     tDLElemPtr element;
-    if (L->First) {
+    if (!L->First) {
         while (L->First != NULL) {
             element = L->First;
             L->First = element->rptr;

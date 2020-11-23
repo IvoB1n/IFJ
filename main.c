@@ -21,7 +21,7 @@ int main() {
     Token scantoken;
 
     DLInitList(&token_list);
-    init_sym_table(&sym_table);
+    sym_table_init(&sym_table);
 
     int retval = scan_token(&scantoken);
     if (retval) {

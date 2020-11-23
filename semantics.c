@@ -47,7 +47,7 @@ int insert_embedded_functions() {
     item->value.func.out_var_list[0] = STRING;
     item->value.func.out_var_list[1] = INT;
 
-    insert_item(&sym_table, item);
+    sym_table_insert_item(&sym_table, item);
 
     //  id, id, =, “inputi”, (, ), eol
     Sym_table_item *item2 = malloc(sizeof(Sym_table_item));
@@ -85,7 +85,7 @@ int insert_embedded_functions() {
     item2->value.func.out_var_list[0] = INT;
     item2->value.func.out_var_list[1] = INT;
 
-    insert_item(&sym_table, item2);
+    sym_table_insert_item(&sym_table, item2);
 
     //  id, id, =, “inputf”, (, ), eol
     Sym_table_item *item3 = malloc(sizeof(Sym_table_item));
@@ -123,7 +123,7 @@ int insert_embedded_functions() {
     item3->value.func.out_var_list[0] = FLOAT64;
     item3->value.func.out_var_list[1] = INT;
    
-    insert_item(&sym_table, item3);
+    sym_table_insert_item(&sym_table, item3);
 
     //  “print”, (, …, ), eol
     Sym_table_item *item4 = malloc(sizeof(Sym_table_item));
@@ -152,7 +152,7 @@ int insert_embedded_functions() {
     item4->value.func.num_out_var = 0;
     item4->value.func.out_var_list = NULL; 
     
-    insert_item(&sym_table, item4);
+    sym_table_insert_item(&sym_table, item4);
 
     //  id, =, “int2float”, (, id, ), eol
     Sym_table_item *item5 = malloc(sizeof(Sym_table_item));
@@ -196,7 +196,7 @@ int insert_embedded_functions() {
 
     item5->value.func.out_var_list[0] = FLOAT64;
 
-    insert_item(&sym_table, item5);
+    sym_table_insert_item(&sym_table, item5);
 
     //  id, =, “float2int”, (, id, ), eol
     Sym_table_item *item6 = malloc(sizeof(Sym_table_item));
@@ -241,7 +241,7 @@ int insert_embedded_functions() {
 
     item6->value.func.out_var_list[0] = INT;
 
-    insert_item(&sym_table, item6);
+    sym_table_insert_item(&sym_table, item6);
 
     //  id, =, “len”, (, id, ), eol
     Sym_table_item *item7 = malloc(sizeof(Sym_table_item));
@@ -286,7 +286,7 @@ int insert_embedded_functions() {
 
     item7->value.func.out_var_list[0] = INT;
 
-    insert_item(&sym_table, item7);
+    sym_table_insert_item(&sym_table, item7);
 
     //  id, id, =, “substr”, (, id, id, id, ), eol
     Sym_table_item *item8 = malloc(sizeof(Sym_table_item));
@@ -334,7 +334,7 @@ int insert_embedded_functions() {
     item8->value.func.out_var_list[0] = STRING;
     item8->value.func.out_var_list[1] = INT;
 
-    insert_item(&sym_table, item8);
+    sym_table_insert_item(&sym_table, item8);
 
     //  id, id, =, “ord”, (, id, id, ), eol
     Sym_table_item *item9 = malloc(sizeof(Sym_table_item));
@@ -381,7 +381,7 @@ int insert_embedded_functions() {
     item9->value.func.out_var_list[0] = INT;
     item9->value.func.out_var_list[1] = INT;
 
-    insert_item(&sym_table, item9);
+    sym_table_insert_item(&sym_table, item9);
 
     //  id, id, =, “chr”, (, id, ), eol
     Sym_table_item *item10 = malloc(sizeof(Sym_table_item));
@@ -426,7 +426,7 @@ int insert_embedded_functions() {
     item10->value.func.out_var_list[0] = STRING;
     item10->value.func.out_var_list[1] = INTEGER;
 
-    insert_item(&sym_table, item10);
+    sym_table_insert_item(&sym_table, item10);
 
     return 0;
 }
@@ -512,10 +512,6 @@ int sem_param_next_rule(Token *token, Sym_table_item *item_ptr, int in_out_var) 
         return 0;
     }
 
-
-
-
-
     if (token->type != COMMA) {
         //clear_item(item_ptr);
         return SYNTAX_ERROR;
@@ -527,41 +523,13 @@ int sem_param_next_rule(Token *token, Sym_table_item *item_ptr, int in_out_var) 
         return SYNTAX_ERROR;
     }
     
-    Sym_table_item *var_item = malloc(sizeof(Sym_table_item));
-    if (!var_item) {
-        return INTERNAL_ERROR;
-    }    
-    int depth = 1;
-    var_item->depth = depth;
-
-    var_item->name = malloc(token->data_size);
-    if (!var_item->name) {
-        free(var_item);
-        return INTERNAL_ERROR;
-    }
-    
     int retval = sem_type_rule(token, item_ptr, in_out_var);
     if (retval) {
         //clear_item(item_ptr);
-        free(var_item);
         return retval;
     }
     
-    DLPred(&token_list);
-    var_item->value.var.type = token->type;
-    DLSucc(&token_list);
-
-    
-    
-    retval = sem_param_next_rule(token, item_ptr, in_out_var);
-    if (retval) {
-        free(var_item->name);
-        free(var_item);
-        return retval;
-        
-    }
-    insert_item(&sym_table, var_item);
-    return retval;
+    return sem_param_next_rule(token, item_ptr, in_out_var);
 }
 
 int sem_param_rule(Token *token, Sym_table_item *item_ptr, int in_out_var) {
@@ -576,47 +544,15 @@ int sem_param_rule(Token *token, Sym_table_item *item_ptr, int in_out_var) {
       //  //clear_item(item_ptr);
         return SYNTAX_ERROR;
     }
-    
-    int depth = 1;
-
-    Sym_table_item *var_item = malloc(sizeof(Sym_table_item));
-    if (!var_item) {
-        return INTERNAL_ERROR;
-    }
-    var_item->depth = depth;
-    var_item->name = malloc(token->data_size * sizeof(char));
-    if (!var_item->name) {
-        free(var_item);
-        return INTERNAL_ERROR;
-    }
-    strcpy(var_item->name, token->data);
-    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
     int retval = sem_type_rule(token, item_ptr, in_out_var);
     if (retval) {
         ////clear_item(item_ptr);
-        free(var_item);
         return retval;
     }
-    
-    DLPred(&token_list);
-    var_item->value.var.type = token->type;
-    DLSucc(&token_list);
-
-    
 
     fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     retval = sem_param_next_rule(token, item_ptr, in_out_var);
-    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-    if (retval) {
-        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-        free(var_item->name);
-        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-        free(var_item);
-        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-        return retval;
-    }
-    insert_item(&sym_table, var_item);
     fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     return retval;
 }
@@ -796,7 +732,7 @@ int fill_function_prototype_list() {
             }
 
             fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-            retval = insert_item(&sym_table, sym_table_item_ptr);
+            retval = sym_table_insert_item(&sym_table, sym_table_item_ptr);
             if (retval) {
                 clear_item(sym_table_item_ptr);
                 return retval;

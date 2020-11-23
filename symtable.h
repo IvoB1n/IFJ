@@ -47,9 +47,9 @@ typedef Sym_table_item *Sym_table[SYM_TABLE_SIZE];
 
 Sym_table sym_table;
 
-void init_sym_table(Sym_table *table);
-int insert_item(Sym_table *table, Sym_table_item *node);
-void delete_on_depth(Sym_table *table, unsigned depth);
-void delete_item(Sym_table *table, char* name, unsigned depth);
-Sym_table_item *search_item(Sym_table *table, char *name, unsigned depth);
+void sym_table_init(Sym_table *table);
+int sym_table_insert_item(Sym_table *table, Sym_table_item *node);
+void sym_table_delete_on_depth(Sym_table *table, unsigned depth);
+void sym_table_delete_item(Sym_table *table, char* name, unsigned depth);
+Sym_table_item *sym_table_search_item(Sym_table *table, char *name, unsigned depth);
 void sym_table_clear_all(Sym_table *table);

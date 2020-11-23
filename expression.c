@@ -1,5 +1,5 @@
 #include "expression.h"
-#include "scanner.h"
+// #include "scanner.h"
 #include "error.h"
 
 #define PREC_TABLE_SIZE 14
@@ -54,14 +54,18 @@ void exp_list_dtor(tDLList *EList, tDLList *stack) {
     printf("%s %d\n", __FILE__, __LINE__);
 }
 
-unsigned exp_list_ctor(tDLList *EList, tDLList *L) {
+unsigned exp_list_ctor(tDLList *EList, tDLList *L, tDLList *types_list, unsigned *exp_t) {
     unsigned exp_type = 0;
 
     while (L->Act != NULL) {
         if (L->Act->token.type == END_OF_LINE ||
              L->Act->token.type == CURLY_BR_L ||
               L->Act->token.type == SEMICOLON ||
-                  L->Act->token.type == COMMA) {
+                L->Act->token.type == COMMA) {
+            break;
+        } else if (L->Act->rptr->token.type == END_OF_LINE &&
+                          L->Act->token.type == ROUND_BR_R && 
+                                          *exp_t == FUNC) {
             break;
         }
         switch (L->Act->token.type) {
@@ -82,7 +86,13 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *L) {
         DLInsertLast(EList, &(L->Act->token));
         L->Act = L->Act->rptr;
     }
-    
+
+    Token token_exp_type;
+    token_exp_type.type = exp_type;
+    token_exp_type.data = NULL;
+    token_exp_type.data_size = 0;
+    DLInsertLast(types_list, &token_exp_type);
+
     Token token;
     token.type = DOLLAR;
     token.data = NULL;
@@ -97,7 +107,7 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *L) {
             case INTEGER:
             case FLOAT:
                 if (EList->Act->token.type != exp_type) {
-                    return SEMANTIC_DATA_TYPES_ERROR;
+                    // return SEMANTIC_DATA_TYPES_ERROR;
                 }
                 EList->Act->token.type = I;
                 break;
@@ -224,13 +234,13 @@ int reduce(tDLList *stack, int *stack_size) {
     return 0; 
 }
 
-int expression() {
+int expression(tDLList *types_list, unsigned exp_t) {
     printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
     tDLList stack;
     DLInitList(&stack);
     tDLList L;
     DLInitList(&L);
-    unsigned err = exp_list_ctor(&L, &token_list);
+    unsigned err = exp_list_ctor(&L, &token_list, types_list, &exp_t);
     if (err) {
         return err;
     }
