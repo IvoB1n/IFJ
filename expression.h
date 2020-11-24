@@ -1,3 +1,3 @@
 #include "scanner.h"
 
-int expression (tDLList *, unsigned); // FUNC or NONE
+int expression (tDLList *, unsigned, unsigned); // FUNC or NONE

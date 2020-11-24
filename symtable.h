@@ -53,3 +53,4 @@ void sym_table_delete_on_depth(Sym_table *table, unsigned depth);
 void sym_table_delete_item(Sym_table *table, char* name, unsigned depth);
 Sym_table_item *sym_table_search_item(Sym_table *table, char *name, unsigned depth);
 void sym_table_clear_all(Sym_table *table);
+int print_sym_table_items (Sym_table *table);
