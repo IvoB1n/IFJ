@@ -69,7 +69,9 @@ int div_by_zero_check(tDLElemPtr elem) {
 
 unsigned exp_list_ctor(tDLList *EList, tDLList *L, tDLList *types_list, unsigned *exp_t, unsigned depth) {
     unsigned exp_type = 0;
+    unsigned err = 0;
     Sym_table_item *item;
+
     while (L->Act != NULL) {
         if (L->Act->token.type == END_OF_LINE ||
              L->Act->token.type == CURLY_BR_L ||
@@ -81,29 +83,49 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *L, tDLList *types_list, unsigned
                                           *exp_t == FUNC) {
             break;
         }
+
         switch (L->Act->token.type) {
-            case ID: // get id type from symtable, and = exp_type
+            case ID:
                 item = sym_table_search_item(&sym_table, L->Act->token.data, depth);
                 if (item == NULL) {
                     printf("%s %d\n", __FILE__, __LINE__);
-                    return SEMANTIC_UNDEFINED_VAR_ERROR;
+                    err = SEMANTIC_UNDEFINED_VAR_ERROR;
+                    break;
                 } else {
-                    exp_type = item->value.var.type;
+                    if (strcmp(L->Act->token.data, "_\0") == 0) {
+                        err = SEMANTIC_OTHER_ERRORS;
+                    } else {
+                        exp_type = item->value.var.type;
+                        DLInsertLast(EList, &(L->Act->token));
+                        EList->Last->token.type = exp_type;
+                    }
                 }
                 break;
             case STR_END:
+                if (L->Act->rptr->token.type == DIV ||
+                    L->Act->rptr->token.type == SUB ||
+                    L->Act->rptr->token.type == MUL) {
+                    err = SEMANTIC_DATA_TYPES_ERROR;
+                }
+                exp_type = L->Act->token.type;
+                DLInsertLast(EList, &(L->Act->token));
+                break;
             case INTEGER:
             case FLOAT:
-            if (div_by_zero_check(L->Act)) {
-                printf("%s %d\n", __FILE__, __LINE__);
-                return SEMANTIC_ZERO_DIVIDION_ERROR;
-            }
-            exp_type = L->Act->token.type;
-            break;
+                if (div_by_zero_check(L->Act)) {
+                    printf("%s %d\n", __FILE__, __LINE__);
+                    err = SEMANTIC_ZERO_DIVIDION_ERROR;
+                }
+                exp_type = L->Act->token.type;
+                DLInsertLast(EList, &(L->Act->token));
+                break;
+            default:
+                DLInsertLast(EList, &(L->Act->token));
+                break;
         };
         fprintf(stdout, "searched type= %u\n", exp_type);
 
-        DLInsertLast(EList, &(L->Act->token));
+        // DLInsertLast(EList, &(L->Act->token));
         L->Act = L->Act->rptr;
     }
 
@@ -122,13 +144,17 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *L, tDLList *types_list, unsigned
     EList->Act = EList->First;
     while (EList->Act != NULL) {
         switch (EList->Act->token.type) {
+            case EQ_SYM:
+            case DECLARE:
+                err = SYNTAX_ERROR;
+                break;
             case ID:
             case STR_END:
             case INTEGER:
             case FLOAT:
                 if (EList->Act->token.type != exp_type) {
                     printf("%s %d\n", __FILE__, __LINE__);
-                    return SEMANTIC_DATA_TYPES_ERROR;
+                    err = SEMANTIC_DATA_TYPES_ERROR;
                 }
                 EList->Act->token.type = I;
                 break;
@@ -149,7 +175,7 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *L, tDLList *types_list, unsigned
         //         break;
         // };
     }
-    return 0;
+    return err;
 }
 
 void pop(tDLList *L){
@@ -309,6 +335,12 @@ int expression(tDLList *types_list, unsigned exp_t, unsigned depth) {
                 break;
             case REDUCE:
                 printf("S_SIZE %d\n", stack_size);
+                // L, LE, G, GE, EQ, NOT_EQ
+                // if (L.Act->token.type != DOLLAR && ((s_token->token.type == L) || (s_token->token.type == LE) || (s_token->token.type == G) || (s_token->token.type == GE) || (s_token->token.type == EQ) || (s_token->token.type == NOT_EQ))) {
+                //     exp_list_dtor(&stack, &L);
+                //     printf("%s %d\n", __FILE__, __LINE__);
+                //     return SEMANTIC_DATA_TYPES_ERROR;
+                // }
                 if(reduce(&stack, &stack_size)) {
                     exp_list_dtor(&stack, &L);
                     printf("%s %d\n", __FILE__, __LINE__);

@@ -44,8 +44,8 @@ int insert_embedded_functions() {
         return INTERNAL_ERROR;
     }
 
-    item->value.func.out_var_list[0] = STRING;
-    item->value.func.out_var_list[1] = INT;
+    item->value.func.out_var_list[0] = STR_END;
+    item->value.func.out_var_list[1] = INTEGER;
 
     sym_table_insert_item(&sym_table, item);
 
@@ -82,8 +82,8 @@ int insert_embedded_functions() {
         return INTERNAL_ERROR;
     }
 
-    item2->value.func.out_var_list[0] = INT;
-    item2->value.func.out_var_list[1] = INT;
+    item2->value.func.out_var_list[0] = INTEGER;
+    item2->value.func.out_var_list[1] = INTEGER;
 
     sym_table_insert_item(&sym_table, item2);
 
@@ -120,8 +120,8 @@ int insert_embedded_functions() {
         return INTERNAL_ERROR;
     }
 
-    item3->value.func.out_var_list[0] = FLOAT64;
-    item3->value.func.out_var_list[1] = INT;
+    item3->value.func.out_var_list[0] = FLOAT;
+    item3->value.func.out_var_list[1] = INTEGER;
    
     sym_table_insert_item(&sym_table, item3);
 
@@ -192,9 +192,9 @@ int insert_embedded_functions() {
         return INTERNAL_ERROR;
     }
 
-    item5->value.func.in_var_list[0] = INT;
+    item5->value.func.in_var_list[0] = INTEGER;
 
-    item5->value.func.out_var_list[0] = FLOAT64;
+    item5->value.func.out_var_list[0] = FLOAT;
 
     sym_table_insert_item(&sym_table, item5);
 
@@ -237,9 +237,9 @@ int insert_embedded_functions() {
         return INTERNAL_ERROR;
     }
 
-    item6->value.func.in_var_list[0] = FLOAT64;
+    item6->value.func.in_var_list[0] = FLOAT;
 
-    item6->value.func.out_var_list[0] = INT;
+    item6->value.func.out_var_list[0] = INTEGER;
 
     sym_table_insert_item(&sym_table, item6);
 
@@ -282,9 +282,9 @@ int insert_embedded_functions() {
         return INTERNAL_ERROR;
     }
 
-    item7->value.func.in_var_list[0] = STRING;
+    item7->value.func.in_var_list[0] = STR_END;
 
-    item7->value.func.out_var_list[0] = INT;
+    item7->value.func.out_var_list[0] = INTEGER;
 
     sym_table_insert_item(&sym_table, item7);
 
@@ -327,12 +327,12 @@ int insert_embedded_functions() {
         return INTERNAL_ERROR;
     }
 
-    item8->value.func.in_var_list[0] = STRING;
-    item8->value.func.in_var_list[1] = INT;
-    item8->value.func.in_var_list[2] = INT;
+    item8->value.func.in_var_list[0] = STR_END;
+    item8->value.func.in_var_list[1] = INTEGER;
+    item8->value.func.in_var_list[2] = INTEGER;
 
-    item8->value.func.out_var_list[0] = STRING;
-    item8->value.func.out_var_list[1] = INT;
+    item8->value.func.out_var_list[0] = STR_END;
+    item8->value.func.out_var_list[1] = INTEGER;
 
     sym_table_insert_item(&sym_table, item8);
 
@@ -375,11 +375,11 @@ int insert_embedded_functions() {
         return INTERNAL_ERROR;
     }
 
-    item9->value.func.in_var_list[0] = STRING;
-    item9->value.func.in_var_list[1] = INT;
+    item9->value.func.in_var_list[0] = STR_END;
+    item9->value.func.in_var_list[1] = INTEGER;
 
-    item9->value.func.out_var_list[0] = INT;
-    item9->value.func.out_var_list[1] = INT;
+    item9->value.func.out_var_list[0] = INTEGER;
+    item9->value.func.out_var_list[1] = INTEGER;
 
     sym_table_insert_item(&sym_table, item9);
 
@@ -423,7 +423,7 @@ int insert_embedded_functions() {
 
     item10->value.func.in_var_list[0] = INTEGER;
 
-    item10->value.func.out_var_list[0] = STRING;
+    item10->value.func.out_var_list[0] = STR_END;
     item10->value.func.out_var_list[1] = INTEGER;
 
     sym_table_insert_item(&sym_table, item10);
@@ -467,6 +467,15 @@ int sem_type_rule(Token *token, Sym_table_item *item_ptr, int in_out_var) {
     sem_get_next_token(token);
     //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     if ((token->type == INT) || (token->type == FLOAT64) || (token->type == STRING)) {
+        if (token->type == INT) {
+            token->type = INTEGER;
+        }
+        else if (token->type == FLOAT64) {
+            token->type = FLOAT;
+        }
+        else if (token->type == STRING) {
+            token->type = STR_END;
+        }
         //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
         if (in_out_var == IN_VAR) {
@@ -753,6 +762,7 @@ int fill_function_prototype_list() {
             }
         }
     }
+    
     return 0;
 }
 
