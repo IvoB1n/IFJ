@@ -1,6 +1,6 @@
-//
+// 0
 package main
 
 func main () {
-	return
+	a := 1 + 2
 }
