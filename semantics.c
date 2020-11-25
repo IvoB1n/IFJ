@@ -438,7 +438,7 @@ void sem_print_token (Token *token) {
 void sem_get_next_token(Token *token) {
     if (token_list.Act != NULL) {
         *token = token_list.Act->token;
-        sem_print_token(token);
+        //sem_print_token(token);
         DLSucc(&token_list);
     }
 }
@@ -746,7 +746,7 @@ int fill_function_prototype_list() {
                 clear_item(sym_table_item_ptr);
                 return retval;
             }
-            // -----------print item ------------
+          /*  // -----------print item ------------
             printf("name: %s\n", sym_table_item_ptr->name);
 
             printf("insize: %u\n", sym_table_item_ptr->value.func.num_in_var);
@@ -759,7 +759,7 @@ int fill_function_prototype_list() {
             printf("outsize: %u\n", sym_table_item_ptr->value.func.num_out_var);
             for (unsigned i = 0; i < sym_table_item_ptr->value.func.num_out_var; i++) {
                 printf("out_var: %d\n", sym_table_item_ptr->value.func.out_var_list[i]);
-            }
+            }*/
         }
     }
     

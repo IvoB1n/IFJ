@@ -9,7 +9,7 @@
 #define EOL '\n'
 
 void print_scan_token (Token *token) {
-    printf( "%d, %s, %d\n", token->type, token->data, token->data_size);
+    fprintf(stderr, "%d, %s, %d\n", token->type, token->data, token->data_size);
 }
 
 

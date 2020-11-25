@@ -14,9 +14,9 @@ Sym_table_item *init_search_item(Sym_table *table, char *name, unsigned depth) {
     int index = hash_code(name); 
     searching_item = (*table)[index + depth * INDEX_SIZE];  
     while (searching_item != NULL) {
-        printf("depth search - %d\n", depth);
-        printf("name search - %s\n", name);
-        printf("searching_item->name - %s\n", searching_item->name);
+        //printf("depth search - %d\n", depth);
+        //printf("name search - %s\n", name);
+        //printf("searching_item->name - %s\n", searching_item->name);
         //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         if ((strcmp(name, searching_item->name) == 0) && (depth == searching_item->depth)) {
             //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
@@ -87,7 +87,7 @@ int sym_table_insert_item(Sym_table *table, Sym_table_item *node) {
         Sym_table_item *new_item = node;        
         ////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         int index = hash_code(node->name);
-        printf("insert_item %s index - %d\n", node->name, index);
+        //printf("insert_item %s index - %d\n", node->name, index);
         ////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         new_item->nextPtr = (*table)[index + node->depth * INDEX_SIZE];
         ////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
@@ -219,12 +219,12 @@ void sym_table_delete_item(Sym_table *table, char* name, unsigned depth) {
 Sym_table_item *search_on_null_lvl(Sym_table_item *searching_item, char *name, unsigned depth, Sym_table *table) {
         ////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     int index = hash_code(name); 
-    printf("index search - %d\n", index);
+    //printf("index search - %d\n", index);
     searching_item = (*table)[index + depth * INDEX_SIZE];  
     while (searching_item != NULL) {
-        printf("depth search - %d\n", depth);
-        printf("name search - %s\n", name);
-        printf("searching_item->name - %s\n", searching_item->name);
+        //printf("depth search - %d\n", depth);
+        //printf("name search - %s\n", name);
+        //printf("searching_item->name - %s\n", searching_item->name);
         ////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         if ((strcmp(name, searching_item->name) == 0) && (depth == searching_item->depth)) {
             //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
@@ -240,16 +240,16 @@ Sym_table_item *search_on_null_lvl(Sym_table_item *searching_item, char *name, u
 Sym_table_item *search_on_non_null_lvl(Sym_table_item *searching_item, char *name, unsigned depth, Sym_table *table) {
     ////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     int index = hash_code(name);
-    printf("index search - %d\n", index);
+    //printf("index search - %d\n", index);
     while ( (depth != 0)) {
 
         searching_item = (*table)[index + depth * INDEX_SIZE];
         while (searching_item != NULL) {
-            printf("depth search - %d\n", depth);
-            printf("name search - %s\n", name);
-            printf("searching_item->name - %s\n", searching_item->name);
+            //printf("depth search - %d\n", depth);
+            //printf("name search - %s\n", name);
+            //printf("searching_item->name - %s\n", searching_item->name);
             ////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-            printf("%s    %s\n", name, searching_item->name);
+            //printf("%s    %s\n", name, searching_item->name);
             ////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             
             if (strcmp(name, searching_item->name) == 0) {
@@ -285,8 +285,8 @@ Sym_table_item *sym_table_search_item(Sym_table *table, char *name, unsigned dep
         ////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         return NULL;
     }*/
-    printf("depth search - %d\n", depth);
-    printf("name search - %s\n", name);
+    //printf("depth search - %d\n", depth);
+    //printf("name search - %s\n", name);
    // printf("searching_item->name - %s\n", searching_item->name);
     ////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
