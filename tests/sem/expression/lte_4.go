@@ -1,5 +1,4 @@
-//compiler 5
-// TODO consider extensions
+//compiler 5  TODO consider extensions
 //
 package main
 

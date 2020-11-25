@@ -1,8 +1,9 @@
-//compiler 2
+//compiler 2 м6 6
 //
 package main
 
 func alpha (param float64) (int) {
+
 }
 
 func main () {

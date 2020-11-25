@@ -22,25 +22,38 @@ search() {
 }
 
 test() {
-        if [ $less_flag = "-l" ]; then
+        if [ "$less_flag" = "-l" ]; then
             echo "$1"
-            ./compiler < "$1" >/dev/null
+            ./compiler < "$1" >/dev/null 2>/dev/null
             ret_val=$?
             line=$(head -n 1 $1)
-            echo "return value:       \e[0;36m $ret_val \e[0m   \e[0;36m ///// \e[0m"
-            echo "expected:\e[0;33m $line \e[0m  \e[0;33m ///// \e[0m" 
-            echo "                         /"
-            echo "                        /"
-
+            echo "  "
+            echo "return value:        $ret_val "
+            echo "expected: $line " 
+        elif [ "$less_flag" = "-v" ]; then
+            echo "$1"
+            valgrind --leak-check=full --track-origins=yes --verbose ./compiler < "$1" 
+            ret_val=$?
+            line=$(head -n 1 $1)
+            echo "  "
+            echo "return value:        $ret_val "
+            echo "expected: $line " 
+        elif [ "$less_flag" = "-lv" ]; then
+            echo "$1"
+            valgrind ./compiler < "$1" >/dev/null 2>/dev/null
+            ret_val=$?
+            line=$(head -n 1 $1)
+            echo "  "
+            echo "return value:        $ret_val "
+            echo "expected: $line " 
         else 
             echo "$1"
-            ./compiler < "$1"
+            ./compiler < "$1" 
             ret_val=$?
             line=$(head -n 1 $1)
-            echo "return value:      \e[0;36m $ret_val \e[0m   \e[0;36m ///// \e[0m"
-            echo "expected:\e[0;33m $line \e[0m  \e[0;33m ///// \e[0m" 
-            echo "                        /"
-            echo "                       /"
+            echo "  "
+            echo "return value:        $ret_val "
+            echo "expected: $line " 
         fi
         echo "  "
 }

@@ -1,8 +1,5 @@
 #include "token_dll.h"
 
-#include<stdio.h>
-#include<stdlib.h>
-
 int solved;
 int errflg;
 
@@ -21,11 +18,23 @@ void DLInitList (tDLList *L) {
 
 void DLDisposeList (tDLList *L) {
     tDLElemPtr element;
+    if (!L->First) {
+        while (L->First != NULL) {
+            element = L->First;
+            L->First = element->rptr;
+        //  fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
-    while ((L->First != NULL)) {
-        element = L->First;
-        L->First = element->rptr;
-        free(element);
+            if (element) {
+            //    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
+                if (element->token.data) {
+                    free(element->token.data);
+                }
+            }
+        //   fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
+            free(element);
+        }
     }
 
     L->Last = NULL;
@@ -122,6 +131,11 @@ void DLDeleteFirst (tDLList *L) {
             L->First->lptr = NULL;
         }
 
+        if (element) {
+            if (element->token.data) {
+                free(element->token.data);
+            }
+        }
         free(element);
     }
 }	
@@ -146,6 +160,11 @@ void DLDeleteLast (tDLList *L) {
             L->Last->rptr = NULL;
         }
 
+        if (element) {
+            if (element->token.data) {
+                free(element->token.data);
+            }
+        }
         free(element);
     }
 }
@@ -166,6 +185,11 @@ void DLPostDelete (tDLList *L) {
             element->rptr->lptr = L->Act;
         }
 
+        if (element) {
+            if (element->token.data) {
+                free(element->token.data);
+            }
+        }
         free(element);
     }
 }
@@ -186,6 +210,11 @@ void DLPreDelete (tDLList *L) {
             element->lptr->rptr = L->Act;
         }
 
+        if (element) {
+            if (element->token.data) {
+                free(element->token.data);
+            }
+        }
         free(element);
     }
 }

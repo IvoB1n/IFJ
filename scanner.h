@@ -1,9 +1,10 @@
 #include "token_dll.h"
+// #include "expression.h"
 
 typedef enum {
     // EXPRESSIONS
     ADD, SUB, MUL, DIV, ROUND_BR_L, ROUND_BR_R, L, LE, G, GE,
-    EQ, NOT_EQ, I, DOLLAR, SHIFT, REDUCE, EQUAL, NONE,
+    EQ, NOT_EQ, I, DOLLAR, SHIFT, REDUCE, EQUAL, NONE, E,
     // IDENTIFIRES
     ID, ID_FUNC,
     // NUMBERS
