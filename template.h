@@ -1,1 +1,1 @@
-void arithm_template(tDLElemPtr s_token);
+void print_head();

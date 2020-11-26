@@ -1,4 +1,5 @@
 // #include "scanner.h"
+#include "template.h"
 #include "error.h"
 #include "symtable.h"
 #include "expression.h"
@@ -1002,10 +1003,8 @@ int statement_rule(Token *token, unsigned depth, char *curr_func_name, int *num_
        
         return statement_rule(token, depth, curr_func_name, num_of_returns);
         if (retval) {
-       
             return retval;
         }
-       
     }
     DLPred(&token_list);
 
@@ -1034,7 +1033,6 @@ int func_def_rule(Token *token) {
 
     get_next_token(token);
     if (token->type != ID) {
-       
         return SYNTAX_ERROR;
     }
     token->type = ID_FUNC;
@@ -1068,7 +1066,6 @@ int func_def_rule(Token *token) {
    
     retval = statement_rule(token, depth, curr_func_name, &num_of_returns);
     if (retval) {
-       
         return retval;
     }    
     Sym_table_item *item = sym_table_search_item(&sym_table, curr_func_name, 0);
@@ -1108,18 +1105,15 @@ int func_def_next_rule(Token *token) {
     }
 
     int retval = func_def_rule(token);
-
     if (retval) {
         return retval;
     }
 
     do {
         get_next_token(token);
-    
     } while (token_list.Act != NULL && token->type == END_OF_LINE);
 
     retval = func_def_next_rule(token);
-
     if (retval) {
         return retval;
     }
@@ -1186,6 +1180,7 @@ int parse() {
         get_next_token(&token);
     } while (token_list.Act != NULL && token.type == END_OF_LINE);
    
+    print_head();
 
     retval =  functions_rule(&token);
     if (retval) {

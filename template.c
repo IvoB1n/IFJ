@@ -4,7 +4,7 @@
 
 
 void print_head() {
-    fprinf(stdout, ".IFJcode20\n");
+    fprintf(stdout, ".IFJcode20\n");
     fprintf(stdout, "JUMP $main\n");
 }
 
@@ -77,7 +77,7 @@ void template_inputf() {
 void template_print(unsigned i) {
     fprintf(stdout, "LABEL $print\n");
     fprintf(stdout, "PUSHFRAME\n");
-    fprinf(stdout, "WRITE LF@%%op%u\n", i);
+    fprintf(stdout, "WRITE LF@%%op%u\n", i);
     fprintf(stdout, "POPFRAME\n");
     fprintf(stdout, "RETURN\n");
 }
@@ -86,7 +86,7 @@ void template_int2float() {
     fprintf(stdout, "LABEL $int2float\n");
     fprintf(stdout, "PUSHFRAME\n");
     fprintf(stdout, "DEFVAR LF@%%retval%u\n", 1);
-    fprintf(stdout, "MOVE LF@%%retval%u LF@%%op%u\n", 1);
+    fprintf(stdout, "MOVE LF@%%retval%u LF@%%op%u\n", 1, 1);
     fprintf(stdout, "DEFVAR LF@!float_retval\n");
     fprintf(stdout, "INT2FLOAT LF@%%retval%u LF@!float_retval\n", 1);
     fprintf(stdout, "POPFRAME\n");
@@ -97,7 +97,7 @@ void template_float2int() {
     fprintf(stdout, "LABEL $float2int\n");
     fprintf(stdout, "PUSHFRAME\n");
     fprintf(stdout, "DEFVAR LF@%%retval%u\n", 1);
-    fprintf(stdout, "MOVE LF@%%retval%u LF@%%op%u\n", 1);
+    fprintf(stdout, "MOVE LF@%%retval%u LF@%%op%u\n", 1, 1);
     fprintf(stdout, "DEFVAR LF@!int_retval\n");
     fprintf(stdout, "FLOAT2INT LF@%%retval%u LF@!int_retval\n", 1);
     fprintf(stdout, "POPFRAME\n");
@@ -108,7 +108,7 @@ void template_len() {
     fprintf(stdout, "LABEL $len\n");
     fprintf(stdout, "PUSHFRAME\n");
     fprintf(stdout, "DEFVAR LF@%%retval%u\n", 1);
-    fprintf(stdout, "MOVE LF@%%retval%u LF@%%op%u\n", 1);
+    fprintf(stdout, "MOVE LF@%%retval%u LF@%%op%u\n", 1, 1);
     fprintf(stdout, "DEFVAR LF@!string_retval\n");
     fprintf(stdout, "STRLEN LF@%%retval%u LF@!string_retval\n", 1);
     fprintf(stdout, "POPFRAME\n");
@@ -119,7 +119,7 @@ void template_substr() {
     fprintf(stdout, "LABEL $len\n");
     fprintf(stdout, "PUSHFRAME\n");
     fprintf(stdout, "DEFVAR LF@%%retval%u\n", 1);
-    fprintf(stdout, "MOVE LF@%%retval%u LF@%%op%u\n", 1);
+    fprintf(stdout, "MOVE LF@%%retval%u LF@%%op%u\n", 1, 1);
 
     fprintf(stdout, "DEFVAR LF@!start\n");
     fprintf(stdout, "DEFVAR LF@!string\n");
@@ -130,10 +130,15 @@ void template_ord() {
     fprintf(stdout, "LABEL $ord\n");
     fprintf(stdout, "PUSHFRAME\n");
     fprintf(stdout, "DEFVAR LF@%%retval%u\n", 1);
-    fprintf(stdout, "MOVE LF@%%retval%u LF@%%op%u\n", 1);
-    fprintf(stdout, "DEFVAR LF@!position_i\n");
+    fprintf(stdout, "MOVE LF@%%retval%u LF@%%op%u\n", 1, 1);
+    fprintf(stdout, "DEFVAR LF@!string\n");
+    fprintf(stdout, "DEFVAR LF@!position\n");
 
-    fprintf(stdout, "LABEL !STR_OK\n");
+    fprintf(stdout, "STRI2INT LF@%%retval%u LF@!string LF@!position\n", 1);
+    fprintf(stdout, "POPFRAME\n");
+    fprintf(stdout, "RETURN\n");
+    
+    fprintf(stdout, "LABEL !STR_NOT_OK\n");
     fprintf(stdout, "MOVE LF@%%retval%u int@1", 1);
     fprintf(stdout, "POPFRAME\n");
     fprintf(stdout, "RETURN\n");
