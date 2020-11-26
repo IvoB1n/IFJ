@@ -49,11 +49,11 @@ void insert_first_by_type(tDLList *L, unsigned type){
 }
 
 void exp_list_dtor(tDLList *EList, tDLList *stack) {
-    printf("%s %d\n", __FILE__, __LINE__);
+    // printf("%s %d\n", __FILE__, __LINE__);
     DLDisposeList(EList);
-    printf("%s %d\n", __FILE__, __LINE__);
+    // printf("%s %d\n", __FILE__, __LINE__);
     DLDisposeList(stack);
-    printf("%s %d\n", __FILE__, __LINE__);
+    // printf("%s %d\n", __FILE__, __LINE__);
 }
 
 int div_by_zero_check(tDLElemPtr elem) {
@@ -88,7 +88,7 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *L, tDLList *types_list, unsigned
             case ID:
                 item = sym_table_search_item(&sym_table, L->Act->token.data, depth);
                 if (item == NULL) {
-                    printf("%s %d\n", __FILE__, __LINE__);
+                    // printf("%s %d\n", __FILE__, __LINE__);
                     err = SEMANTIC_UNDEFINED_VAR_ERROR;
                     break;
                 } else {
@@ -113,7 +113,7 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *L, tDLList *types_list, unsigned
             case INTEGER:
             case FLOAT:
                 if (div_by_zero_check(L->Act)) {
-                    printf("%s %d\n", __FILE__, __LINE__);
+                    // printf("%s %d\n", __FILE__, __LINE__);
                     err = SEMANTIC_ZERO_DIVIDION_ERROR;
                 }
                 exp_type = L->Act->token.type;
@@ -123,7 +123,7 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *L, tDLList *types_list, unsigned
                 DLInsertLast(EList, &(L->Act->token));
                 break;
         };
-        fprintf(stdout, "searched type= %u\n", exp_type);
+        // fprintf(stdout, "searched type= %u\n", exp_type);
 
         // DLInsertLast(EList, &(L->Act->token));
         L->Act = L->Act->rptr;
@@ -153,7 +153,7 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *L, tDLList *types_list, unsigned
             case INTEGER:
             case FLOAT:
                 if (EList->Act->token.type != exp_type) {
-                    printf("%s %d\n", __FILE__, __LINE__);
+                    // printf("%s %d\n", __FILE__, __LINE__);
                     err = SEMANTIC_DATA_TYPES_ERROR;
                 }
                 EList->Act->token.type = I;
@@ -233,7 +233,7 @@ int reduce(tDLList *stack, int *stack_size) {
         case EQ:      // EXPR -> EXPR == EXPR
         case NOT_EQ:  // EXPR -> EXPR != EXPR
             // printf("FFUUUUUUUUUUUUUNCK CALLL");
-            if (count_active_non_terms(stack) == 3) {
+            if (count_active_non_terms(stack) == 3) { // create tmp, 
                 if (s_token->lptr->token.type == E && s_token->rptr->token.type == E) {
                     pop(stack);
                     pop(stack);
@@ -281,14 +281,14 @@ int reduce(tDLList *stack, int *stack_size) {
 }
 
 int expression(tDLList *types_list, unsigned exp_t, unsigned depth) {
-    printf("~~~~~~~~~~~~~~~~~search~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+    // printf("~~~~~~~~~~~~~~~~~search~~~~~~~~~~~~~~~~~~~~~~~~~\n");
     tDLList stack;
     DLInitList(&stack);
     tDLList L;
     DLInitList(&L);
     unsigned err = exp_list_ctor(&L, &token_list, types_list, &exp_t, depth);
     if (err) {
-        fprintf(stderr, "ERROR IN LIST CTOR\n");
+        // fprintf(stderr, "ERROR IN LIST CTOR\n");
         exp_list_dtor(&stack, &L);
         return err;
     }
@@ -297,19 +297,19 @@ int expression(tDLList *types_list, unsigned exp_t, unsigned depth) {
 
     insert_first_by_type(&stack, DOLLAR);
 
-    printf("PrintExpList!!1!\n");
-    print_exp_list(&L);
+    // printf("PrintExpList!!1!\n");
+    // print_exp_list(&L);
     // print_exp_list(&stack);
 
     tDLElemPtr s_token = get_non_term(&stack);
 
     int stack_size = 1;
     do {
-        printf("%s %d\n", __FILE__, __LINE__);
+        // printf("%s %d\n", __FILE__, __LINE__);
 
-        printf("--start in= %d neterm= %d\n", L.Act->token.type, s_token->token.type);
+        // printf("--start in= %d neterm= %d\n", L.Act->token.type, s_token->token.type);
         // print_exp_list(&L);
-        print_exp_list(&stack);
+        // print_exp_list(&stack);
 
         unsigned prec_table_rule = get_prec_table_rule(s_token->token.type, L.Act->token.type);
 
@@ -334,7 +334,7 @@ int expression(tDLList *types_list, unsigned exp_t, unsigned depth) {
                 stack_size+=2;
                 break;
             case REDUCE:
-                printf("S_SIZE %d\n", stack_size);
+                // printf("S_SIZE %d\n", stack_size);
                 // L, LE, G, GE, EQ, NOT_EQ
                 // if (L.Act->token.type != DOLLAR && ((s_token->token.type == L) || (s_token->token.type == LE) || (s_token->token.type == G) || (s_token->token.type == GE) || (s_token->token.type == EQ) || (s_token->token.type == NOT_EQ))) {
                 //     exp_list_dtor(&stack, &L);
@@ -343,27 +343,27 @@ int expression(tDLList *types_list, unsigned exp_t, unsigned depth) {
                 // }
                 if(reduce(&stack, &stack_size)) {
                     exp_list_dtor(&stack, &L);
-                    printf("%s %d\n", __FILE__, __LINE__);
+                    // printf("%s %d\n", __FILE__, __LINE__);
                     return SYNTAX_ERROR;
                 }
                 break;
             case NONE:
                 exp_list_dtor(&stack, &L);
-                printf("%s %d\n", __FILE__, __LINE__);
+                // printf("%s %d\n", __FILE__, __LINE__);
                 return SYNTAX_ERROR;
             default:
                 exp_list_dtor(&stack, &L);
-                printf("%s %d\n", __FILE__, __LINE__);
+                // printf("%s %d\n", __FILE__, __LINE__);
                 return SYNTAX_ERROR;
         };
-        printf("--end-- next= %d\n", L.Act->token.type);
-        print_exp_list(&stack);
+        // printf("--end-- next= %d\n", L.Act->token.type);
+        // print_exp_list(&stack);
         
         s_token = get_non_term(&stack);
-        printf("stack.F= %d  L.Act= %d\n", stack.First->token.type, L.Act->token.type);
+        // printf("stack.F= %d  L.Act= %d\n", stack.First->token.type, L.Act->token.type);
     } while ((s_token->token.type != DOLLAR) || (L.Act->token.type != DOLLAR));
     
-    printf("%s %d\n", __FILE__, __LINE__);
+    // printf("%s %d\n", __FILE__, __LINE__);
     exp_list_dtor(&stack, &L);
 
     return 0; 
