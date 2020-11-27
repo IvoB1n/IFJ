@@ -2,7 +2,7 @@
 
 # use ./tests/test_script.sh /tests/add/add (-l for less information) to run script
 
-dir_to_search=$PWD$1;
+dir_to_search=$1;
 less_flag=$2
 
 search() {
@@ -28,32 +28,69 @@ test() {
             ret_val=$?
             line=$(head -n 1 $1)
             echo "  "
-            echo "return value:        $ret_val "
-            echo "expected: $line " 
+            echo "return value:       \e[0;36m $ret_val \e[0m   \e[0;36m ///// \e[0m"
+            echo "expected:\e[0;33m $line \e[0m  \e[0;33m ///// \e[0m" 
+            echo "                         /"
+            echo "                        /"
         elif [ "$less_flag" = "-v" ]; then
             echo "$1"
             valgrind --leak-check=full --track-origins=yes --verbose ./compiler < "$1" 
             ret_val=$?
             line=$(head -n 1 $1)
             echo "  "
-            echo "return value:        $ret_val "
-            echo "expected: $line " 
+            echo "return value:       \e[0;36m $ret_val \e[0m   \e[0;36m ///// \e[0m"
+            echo "expected:\e[0;33m $line \e[0m  \e[0;33m ///// \e[0m" 
+            echo "                         /"
+            echo "                        /"
         elif [ "$less_flag" = "-lv" ]; then
             echo "$1"
-            valgrind ./compiler < "$1" >/dev/null 2>/dev/null
+            valgrind ./compiler < "$1" >/dev/null # 2>/dev/null
+            ret_val=$?
+            line=$(head -n 1 $1)
+            echo "  "
+            echo "return value:       \e[0;36m $ret_val \e[0m   \e[0;36m ///// \e[0m"
+            echo "expected:\e[0;33m $line \e[0m  \e[0;33m ///// \e[0m" 
+            echo "                         /"
+            echo "                        /"
+        elif [ "$less_flag" = "-gl" ]; then
+            echo "$1"
+            ./compiler < "$1"   2>/dev/null > output.out
+            ret_val=$?
+            # line=$(head -n 1 $1)
+            # echo "  "
+            # echo "return value:       \e[0;36m $ret_val \e[0m   \e[0;36m ///// \e[0m"
+            # echo "expected:\e[0;33m $line \e[0m  \e[0;33m ///// \e[0m" 
+            # echo "                         /"
+            # echo "                        /"
+        elif [ "$less_flag" = "-g" ]; then
+            echo "$1"
+            ./compiler < "$1" #> output.out  2>/dev/null
+            ret_val=$?
+            line=$(head -n 1 $1)
+            echo "  "
+            echo "return value:       \e[0;36m $ret_val \e[0m   \e[0;36m ///// \e[0m"
+            echo "expected:\e[0;33m $line \e[0m  \e[0;33m ///// \e[0m" 
+            echo "                         /"
+            echo "                        /"
+        elif [ "$less_flag" = "-go" ]; then
+            echo "$1"
+            ./compiler < "$1" >generated.code 2>/dev/null
+            # ./tests/ic20int generated_code.code
             ret_val=$?
             line=$(head -n 1 $1)
             echo "  "
             echo "return value:        $ret_val "
-            echo "expected: $line " 
+            echo "expected: $line "
         else 
             echo "$1"
-            ./compiler < "$1" 
+            ./compiler < "$1" > output.out
             ret_val=$?
             line=$(head -n 1 $1)
             echo "  "
-            echo "return value:        $ret_val "
-            echo "expected: $line " 
+            echo "return value:       \e[0;36m $ret_val \e[0m   \e[0;36m ///// \e[0m"
+            echo "expected:\e[0;33m $line \e[0m  \e[0;33m ///// \e[0m" 
+            echo "                         /"
+            echo "                        /"
         fi
         echo "  "
 }

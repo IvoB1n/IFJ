@@ -22,7 +22,7 @@ void template_inputs() { // (string, int) if type(string) == Nil, return 1. else
 
     fprintf(stdout, "LABEL !inps\n");
 
-    fprintf(stdout, "PUSHS LF@%%retval%u\n");
+    fprintf(stdout, "PUSHS LF@%%retval%u\n", 1);
     fprintf(stdout, "PUSHS LF@!error\n");
 
     fprintf(stdout, "POPFRAME\n");
@@ -47,7 +47,7 @@ void template_inputi() {
 
     fprintf(stdout, "LABEL !inpi\n");
 
-    fprintf(stdout, "PUSHS LF@%%retval%u\n");
+    fprintf(stdout, "PUSHS LF@%%retval%u\n", 1);
     fprintf(stdout, "PUSHS LF@!error\n");
 
     fprintf(stdout, "POPFRAME\n");
@@ -72,7 +72,7 @@ void template_inputf() {
 
     fprintf(stdout, "LABEL !inpf\n");
 
-    fprintf(stdout, "PUSHS LF@%%retval%u\n");
+    fprintf(stdout, "PUSHS LF@%%retval%u\n", 1);
     fprintf(stdout, "PUSHS LF@!error\n");
 
     fprintf(stdout, "POPFRAME\n");
@@ -271,7 +271,3 @@ void template_chr() {
     fprintf(stdout, "POPFRAME\n");
     fprintf(stdout, "RETURN\n");
 }
-
-// void arithm_template(tDLElemPtr s_token) {
-    
-// }

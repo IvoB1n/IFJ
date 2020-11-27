@@ -9,7 +9,7 @@ unsigned exp_type;
 
 #define PREC_TABLE_SIZE 14
 
-void generate_str (tDLElemPtr s_token) {
+void generate_str (tDLElemPtr s_token) { //add from hex to dec
     for (unsigned i = 1; i < s_token->token.data_size-2; i++) {
         if ((s_token->token.data[i] >= 'a' && s_token->token.data[i] <= 'z') ||
             (s_token->token.data[i] >= 'A' && s_token->token.data[i] <= 'Z')) {
@@ -24,14 +24,33 @@ void generate_str (tDLElemPtr s_token) {
         } else if (s_token->token.data[i] == '\\' && s_token->token.data[i+1] == 'n') {
             fprintf(stdout, "\\0%d", '\n');
             i+=1;
+        } else if (s_token->token.data[i] == '\\' && s_token->token.data[i+1] == 't') {
+            fprintf(stdout, "\\0%d", '\t');
+            i+=1;
+        } else if ((s_token->token.data_size-2-i) >= 4) {
+            if(s_token->token.data[i] == '\\' && s_token->token.data[i+1] == 'x') {
+                char s[2];
+                s[0] = s_token->token.data[i+2];
+                s[1] = s_token->token.data[i+3];
+                int x;
+                sscanf(s, "%x", &x);
+                if (x < 100) {
+                    printf("\\0%u", x);
+                } else {
+                    printf("\\%u", x);
+                }
+            }
+            i+=3;
         }
     }
     fprintf(stdout, "\n");
 }
 
 void generate_push_by_type(tDLElemPtr s_token) {
-    if (exp_type == INTEGER && !((s_token->token.data[0] >= 'a' && s_token->token.data[0] <= 'z') ||
-                                (s_token->token.data[0] >= 'A' && s_token->token.data[0] <= 'Z'))) {
+    if (((s_token->token.data[0] >= 'a' && s_token->token.data[0] <= 'z') ||
+         (s_token->token.data[0] >= 'A' && s_token->token.data[0] <= 'Z'))) {
+        fprintf(stdout, "PUSHS LF@%s\n", s_token->token.data);
+    } else if (exp_type == INTEGER) {
         fprintf(stdout, "PUSHS int@%s\n", s_token->token.data);
     } else if (exp_type == FLOAT) {
         double fl = strtod(s_token->token.data, NULL);
@@ -40,8 +59,6 @@ void generate_push_by_type(tDLElemPtr s_token) {
     } else if (exp_type == STR_END) {
         fprintf(stdout, "PUSHS string@");
         generate_str(s_token);
-    } else {
-        fprintf(stdout, "PUSHS LF@%s\n", s_token->token.data);
     }
 }
 
@@ -53,12 +70,12 @@ unsigned prec_table [PREC_TABLE_SIZE][PREC_TABLE_SIZE] = {
     {REDUCE, REDUCE, REDUCE, REDUCE, SHIFT, REDUCE, REDUCE, REDUCE, REDUCE, REDUCE, REDUCE, REDUCE, SHIFT, REDUCE}, // /
     {SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, EQUAL,  SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, NONE  }, // (
     {REDUCE, REDUCE, REDUCE, REDUCE, NONE,  REDUCE, REDUCE, REDUCE, REDUCE, REDUCE, REDUCE, REDUCE, NONE,  REDUCE}, // )
-    {SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, REDUCE, NONE,   NONE,   NONE,   NONE,   REDUCE, REDUCE, SHIFT, REDUCE}, // <
-    {SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, REDUCE, NONE,   NONE,   NONE,   NONE,   REDUCE, REDUCE, SHIFT, REDUCE}, // <=
-    {SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, REDUCE, NONE,   NONE,   NONE,   NONE,   REDUCE, REDUCE, SHIFT, REDUCE}, // >
-    {SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, REDUCE, NONE,   NONE,   NONE,   NONE,   REDUCE, REDUCE, SHIFT, REDUCE}, // >=
-    {SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, REDUCE, SHIFT,  SHIFT,  SHIFT,  SHIFT,  NONE,   NONE,   SHIFT, REDUCE}, // ==
-    {SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, REDUCE, SHIFT,  SHIFT,  SHIFT,  SHIFT,  NONE,   NONE,   SHIFT, REDUCE}, // !=
+    {SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, REDUCE, NONE,   NONE,   NONE,   NONE,   NONE,   NONE,   SHIFT, REDUCE}, // <
+    {SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, REDUCE, NONE,   NONE,   NONE,   NONE,   NONE,   NONE,   SHIFT, REDUCE}, // <=
+    {SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, REDUCE, NONE,   NONE,   NONE,   NONE,   NONE,   NONE,   SHIFT, REDUCE}, // >
+    {SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, REDUCE, NONE,   NONE,   NONE,   NONE,   NONE,   NONE,   SHIFT, REDUCE}, // >=
+    {SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, REDUCE, SHIFT,  NONE,   NONE,   NONE,   NONE,   NONE,   SHIFT, REDUCE}, // ==
+    {SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, REDUCE, SHIFT,  NONE,   NONE,   NONE,   NONE,   NONE,   SHIFT, REDUCE}, // !=
     {REDUCE, REDUCE, REDUCE, REDUCE, NONE,  REDUCE, REDUCE, REDUCE, REDUCE, REDUCE, REDUCE, REDUCE, NONE,  REDUCE}, // i
     {SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, NONE,   SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, NONE }}; // $
 
@@ -78,17 +95,17 @@ void arithm_template(tDLElemPtr s_token) {
                 fprintf(stdout, "DEFVAR LF@&div_zero_number\n");
                 fprintf(stdout, "DEFVAR LF@&div_zero_type\n");
                 fprintf(stdout, "POPS LF@&div_zero_number\n");
-                fprintf(stdout, "TYPE LF@&div_zero_number LF@&div_zero_type\n");
-                fprintf(stdout, "JUMPIFEQ &div_zero_label_float LF@&div_zero_type string@float\n");
+                fprintf(stdout, "TYPE LF@&div_zero_type LF@&div_zero_number\n");
+                fprintf(stdout, "JUMPIFEQ &div_zero_label_float LF@&div_zero_type string@float64\n");
                 fprintf(stdout, "JUMPIFEQ &div_zero_label_int LF@&div_zero_type string@int\n");
                 fprintf(stdout, "EXIT int@7\n");
 
                 fprintf(stdout, "LABEL &div_zero_label_float\n");
-                fprintf(stdout, "JUMPIFEQ &div_zero_label_end LF@&div_zero_number float@0x0p+0\n");
+                fprintf(stdout, "JUMPIFNEQ &div_zero_label_end LF@&div_zero_number float@0x0p+0\n");
                 fprintf(stdout, "EXIT int@9\n");
 
                 fprintf(stdout, "LABEL &div_zero_label_int\n");
-                fprintf(stdout, "JUMPIFEQ &div_zero_label_end LF@&div_zero_number int@0\n");
+                fprintf(stdout, "JUMPIFNEQ &div_zero_label_end LF@&div_zero_number int@0\n");
                 fprintf(stdout, "EXIT int@9\n");
 
                 fprintf(stdout, "LABEL &div_zero_label_end\n");
@@ -189,6 +206,7 @@ int div_by_zero_check(tDLElemPtr elem) {
 unsigned exp_list_ctor(tDLList *EList, tDLList *token_list, tDLList *types_list, unsigned *exp_t, unsigned depth) {
     exp_type = 0;
     unsigned err = 0;
+    unsigned n_of_var = 0;
     Sym_table_item *item;
 
     while (token_list->Act != NULL) {
@@ -278,6 +296,7 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *token_list, tDLList *types_list,
             case STR_END:
             case INTEGER:
             case FLOAT:
+                n_of_var+=1;
                 if (EList->Act->token.type != exp_type) {
                     err = SEMANTIC_DATA_TYPES_ERROR;
                 }
@@ -285,6 +304,9 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *token_list, tDLList *types_list,
                 break;
         };
         EList->Act = EList->Act->rptr; 
+    }
+    if ((*exp_t == IF || *exp_t == FOR) && ops == 0 && n_of_var > 0) {
+        return SEMANTIC_DATA_TYPES_ERROR;
     }
     return err;
 }
