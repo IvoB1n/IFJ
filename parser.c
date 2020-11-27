@@ -355,8 +355,6 @@ int vars_rule(Token *token, tDLList *ret_list, unsigned depth) {
     return 0;
 }
 
-
-
 int check_types_in_assignment(tDLList *left_list, tDLList *right_list, unsigned depth) {
     DLFirst(left_list);
     DLFirst(right_list);
@@ -400,8 +398,8 @@ int check_types_in_assignment(tDLList *left_list, tDLList *right_list, unsigned 
 */
 int else_rule(Token *token, unsigned depth, char *curr_func_name, int *num_of_returns) {
     get_next_token(token);
-
     if (token->type == END_OF_LINE) {
+        
         return 0;
     }
 
@@ -419,11 +417,8 @@ int else_rule(Token *token, unsigned depth, char *curr_func_name, int *num_of_re
         return SYNTAX_ERROR;
     }
 
-    int retval = increase_depth(&depth);
-    if (retval) {
-        return retval;
-    }
-
+    int retval;
+    
     retval = statement_rule(token, depth, curr_func_name, num_of_returns);
     if (retval) {
         return retval;
@@ -434,13 +429,10 @@ int else_rule(Token *token, unsigned depth, char *curr_func_name, int *num_of_re
         return SYNTAX_ERROR;
     }
     
-    decrease_depth(&depth);
-
     get_next_token(token);
     if (token->type != END_OF_LINE) {
         return SYNTAX_ERROR;
     }
-
     return 0;
 }
 
@@ -634,7 +626,7 @@ int func_call(Token *token, tDLList *list, unsigned depth) {
                 if (retval) {
                     DLDisposeList(&func_input_list_left);
                     DLDisposeList(&func_input_list_right);
-                    return retval;
+                    return SEMANTIC_FUNCTION_ERROR;//retval;
                 }
 
                 i = item->value.func.num_in_var;
@@ -649,8 +641,8 @@ int func_call(Token *token, tDLList *list, unsigned depth) {
                 DLDisposeList(&func_input_list_left);
                 DLDisposeList(&func_input_list_right);
                 return SEMANTIC_FUNCTION_ERROR;
-            }*/
-
+            }
+            */
             fprintf(stdout, "CALL $%s\n", func_name);
 
             DLDisposeList(&func_input_list_left);
@@ -799,6 +791,7 @@ int assignment_rule(Token *token, unsigned depth) {
     if (retval) {
         DLDisposeList(&assign_left_list);
         DLDisposeList(&assign_right_list);
+        return retval;
     }
 
     DLLast(&assign_left_list);
@@ -826,28 +819,31 @@ int statement_rule(Token *token, unsigned depth, char *curr_func_name, int *num_
     } while (token_list.Act != NULL && token->type == END_OF_LINE);
 
     if (token->type == IF) {
-               
-
+        
         retval = increase_depth(&depth);
         if (retval) {
             return retval;
         }
-               
 
+        fprintf(stdout, "DEFVAR LF@?if_%s\n", curr_func_name);
+        
         tDLList unused_list;
         DLInitList(&unused_list);
-        retval = expression_rule(token, &unused_list, depth, NONE);
+        retval = expression_rule(token, &unused_list, depth, IF);
         if (retval) {
             return retval;
         }
-               
+
+        
+        fprintf(stdout, "POPS LF@?if_%s\n", curr_func_name);
+        fprintf(stdout, "JUMPIFNEQ LF@?if_%s bool@true ?end_if_%s\n", 
+                curr_func_name, curr_func_name);
 
         DLDisposeList(&unused_list);
         get_next_token(token);
         if (token->type != CURLY_BR_L) {
             return SYNTAX_ERROR;
         }
-
         retval = statement_rule(token, depth, curr_func_name, num_of_returns);
         if (retval) {
             return retval;
@@ -858,19 +854,31 @@ int statement_rule(Token *token, unsigned depth, char *curr_func_name, int *num_
             return SYNTAX_ERROR;
         }
 
+        fprintf(stdout, "JUMP LF@?end_if_%s\n", curr_func_name);
+
         decrease_depth(&depth);
-       
+
+        int retval = increase_depth(&depth);
+        if (retval) {
+            return retval;
+        }
+        
+        
         retval = else_rule(token, depth, curr_func_name, num_of_returns);
         if (retval) {
             return retval;
         }
-
+        
+        fprintf(stdout, "LABEL ?end_if_%s\n", curr_func_name);
+        
+        decrease_depth(&depth);
         retval = statement_rule(token, depth, curr_func_name, num_of_returns);
         if (retval) {
             return retval;
         }
     }
     else if (token->type == FOR) {
+        static unsigned num_of_fors = 1;
         retval = increase_depth(&depth);
         if (retval) {
             return retval;
@@ -883,10 +891,11 @@ int statement_rule(Token *token, unsigned depth, char *curr_func_name, int *num_
 
         tDLList unused_list;
         DLInitList(&unused_list);
-        retval = expression_rule(token, &unused_list, depth, NONE);
+        retval = expression_rule(token, &unused_list, depth, FOR);
         if (retval) {
             return retval;
         }
+
         DLDisposeList(&unused_list);
 
         get_next_token(token);
@@ -915,6 +924,8 @@ int statement_rule(Token *token, unsigned depth, char *curr_func_name, int *num_
             return retval;
         }
         
+        num_of_fors++;
+
         retval = statement_rule(token, depth, curr_func_name, num_of_returns);
         if (retval) {
             return retval;

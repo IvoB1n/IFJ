@@ -1,14 +1,49 @@
 #include "expression.h"
-// #include "scanner.h"
 #include "error.h"
 #include "symtable.h"
-// #include "template.h"
 #include <string.h>
 
 int ops;
 int done_ops;
+unsigned exp_type;
 
 #define PREC_TABLE_SIZE 14
+
+void generate_str (tDLElemPtr s_token) {
+    for (unsigned i = 1; i < s_token->token.data_size-2; i++) {
+        if ((s_token->token.data[i] >= 'a' && s_token->token.data[i] <= 'z') ||
+            (s_token->token.data[i] >= 'A' && s_token->token.data[i] <= 'Z')) {
+                fprintf(stdout, "%c", s_token->token.data[i]);
+        } else if (s_token->token.data[i] == '#') {
+            fprintf(stdout, "\\0%d", '#');
+        } else if (s_token->token.data[i] == ' ') {
+            fprintf(stdout, "\\0%d", ' ');
+        } else if (s_token->token.data[i] == '\\' && s_token->token.data[i+1] == '\\') {
+            fprintf(stdout, "\\0%d", '\\');
+            i+=1;
+        } else if (s_token->token.data[i] == '\\' && s_token->token.data[i+1] == 'n') {
+            fprintf(stdout, "\\0%d", '\n');
+            i+=1;
+        }
+    }
+    fprintf(stdout, "\n");
+}
+
+void generate_push_by_type(tDLElemPtr s_token) {
+    if (exp_type == INTEGER && !((s_token->token.data[0] >= 'a' && s_token->token.data[0] <= 'z') ||
+                                (s_token->token.data[0] >= 'A' && s_token->token.data[0] <= 'Z'))) {
+        fprintf(stdout, "PUSHS int@%s\n", s_token->token.data);
+    } else if (exp_type == FLOAT) {
+        double fl = strtod(s_token->token.data, NULL);
+        fprintf(stdout, "PUSHS float@%a\n", fl);
+        fprintf(stderr, " float@ (%f)\n", fl);
+    } else if (exp_type == STR_END) {
+        fprintf(stdout, "PUSHS string@");
+        generate_str(s_token);
+    } else {
+        fprintf(stdout, "PUSHS LF@%s\n", s_token->token.data);
+    }
+}
 
 unsigned prec_table [PREC_TABLE_SIZE][PREC_TABLE_SIZE] = {
 //      +       -      *       /       (       )      <       <=      >       >=      ==     !=       i      $
@@ -27,12 +62,8 @@ unsigned prec_table [PREC_TABLE_SIZE][PREC_TABLE_SIZE] = {
     {REDUCE, REDUCE, REDUCE, REDUCE, NONE,  REDUCE, REDUCE, REDUCE, REDUCE, REDUCE, REDUCE, REDUCE, NONE,  REDUCE}, // i
     {SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, NONE,   SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, NONE }}; // $
 
-void arithm_template(tDLElemPtr s_token, int* stack_size) {
-    // printf("ops= %d  done_ops= %d stack_size= %d\n", ops, done_ops, *stack_size);
-    if (s_token->lptr->token.data == NULL) {
-        if (*stack_size != 2 || (*stack_size == 2 && done_ops == 0)) {
-            fprintf(stdout, "PUSHS %s\n", s_token->rptr->token.data);
-        }
+void arithm_template(tDLElemPtr s_token) {
+    if (exp_type != STR_END) {
         switch(s_token->token.type) {
             case ADD:
                 fprintf(stdout, "ADDS\n");
@@ -44,28 +75,36 @@ void arithm_template(tDLElemPtr s_token, int* stack_size) {
                 fprintf(stdout, "MULS\n");
                 break;
             case DIV:
+                fprintf(stdout, "DEFVAR LF@&div_zero_number\n");
+                fprintf(stdout, "DEFVAR LF@&div_zero_type\n");
+                fprintf(stdout, "POPS LF@&div_zero_number\n");
+                fprintf(stdout, "TYPE LF@&div_zero_number LF@&div_zero_type\n");
+                fprintf(stdout, "JUMPIFEQ &div_zero_label_float LF@&div_zero_type string@float\n");
+                fprintf(stdout, "JUMPIFEQ &div_zero_label_int LF@&div_zero_type string@int\n");
+                fprintf(stdout, "EXIT int@7\n");
+
+                fprintf(stdout, "LABEL &div_zero_label_float\n");
+                fprintf(stdout, "JUMPIFEQ &div_zero_label_end LF@&div_zero_number float@0x0p+0\n");
+                fprintf(stdout, "EXIT int@9\n");
+
+                fprintf(stdout, "LABEL &div_zero_label_int\n");
+                fprintf(stdout, "JUMPIFEQ &div_zero_label_end LF@&div_zero_number int@0\n");
+                fprintf(stdout, "EXIT int@9\n");
+
+                fprintf(stdout, "LABEL &div_zero_label_end\n");
+                fprintf(stdout, "PUSHS LF@&div_zero_number\n");
                 fprintf(stdout, "DIVS\n");
                 break;
         };
         done_ops+=1;
     } else {
-        if (*stack_size != 2 || (*stack_size == 2 && done_ops == 0)) {
-            fprintf(stdout, "PUSHS int@%s\n", s_token->lptr->token.data);
-        }        switch(s_token->token.type) {
-            case ADD:
-                fprintf(stdout, "ADDS\n");
-                break;
-            case SUB:
-                fprintf(stdout, "SUBS\n");
-                break;
-            case MUL:
-                fprintf(stdout, "MULS\n");
-                break;
-            case DIV:
-                fprintf(stdout, "DIVS\n");
-                break;
-        };
-        done_ops+=1;
+        fprintf(stdout, "DEFVAR LF@^s_op%u\n", 1);
+        fprintf(stdout, "DEFVAR LF@^s_op%u\n", 2);
+        fprintf(stdout, "DEFVAR LF@^s_res\n");
+        fprintf(stdout, "POPS LF@^s_op%u\n", 2);
+        fprintf(stdout, "POPS LF@^s_op%u\n", 1);
+        fprintf(stdout, "CONCAT LF@^s_res LF@^s_op%u LF@^s_op%u\n", 1, 2);
+        fprintf(stdout, "PUSH LF@^s_res\n");
     }
 }
 
@@ -103,7 +142,7 @@ void print_exp_list(tDLList *L) {
     tDLElemPtr tmp = L->First;
     printf("---------------\n");
     while (tmp != NULL) {
-        printf( "type= %-4d   data= %-4s\n", tmp->token.type, tmp->token.data);
+        printf( "type= %-4d   data= %-4s  d_size= %-4d\n", tmp->token.type, tmp->token.data, tmp->token.data_size);
         tmp = tmp->rptr;
     }
     printf("---------------\n");
@@ -122,10 +161,9 @@ void insert_first_by_type(tDLList *L, unsigned type){
 void insert_E(tDLList *L){    
     Token token;
     token.type = E;
-
+    token.data_size = L->First->token.data_size;
     token.data = malloc(sizeof(char) * L->First->token.data_size);
     strcpy(token.data, L->First->token.data);
-    token.data_size = 0;
 
     DLDeleteFirst (L);
     DLDeleteFirst (L);
@@ -133,11 +171,8 @@ void insert_E(tDLList *L){
 }
 
 void exp_list_dtor(tDLList *EList, tDLList *stack) {
-    // printf("%s %d\n", __FILE__, __LINE__);
     DLDisposeList(EList);
-    // printf("%s %d\n", __FILE__, __LINE__);
     DLDisposeList(stack);
-    // printf("%s %d\n", __FILE__, __LINE__);
 }
 
 int div_by_zero_check(tDLElemPtr elem) {
@@ -152,19 +187,19 @@ int div_by_zero_check(tDLElemPtr elem) {
 }
 
 unsigned exp_list_ctor(tDLList *EList, tDLList *token_list, tDLList *types_list, unsigned *exp_t, unsigned depth) {
-    unsigned exp_type = 0;
+    exp_type = 0;
     unsigned err = 0;
     Sym_table_item *item;
 
     while (token_list->Act != NULL) {
         if (token_list->Act->token.type == END_OF_LINE ||
-             token_list->Act->token.type == CURLY_BR_L ||
-              token_list->Act->token.type == SEMICOLON ||
-                token_list->Act->token.type == COMMA) {
+            token_list->Act->token.type == CURLY_BR_L  ||
+            token_list->Act->token.type == SEMICOLON   ||
+            token_list->Act->token.type == COMMA) {
             break;
         } else if (token_list->Act->rptr->token.type == END_OF_LINE &&
                           token_list->Act->token.type == ROUND_BR_R && 
-                                          *exp_t == FUNC) {
+                          *exp_t == FUNC) {
             break;
         }
 
@@ -172,7 +207,6 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *token_list, tDLList *types_list,
             case ID:
                 item = sym_table_search_item(&sym_table, token_list->Act->token.data, depth);
                 if (item == NULL) {
-                    // printf("%s %d\n", __FILE__, __LINE__);
                     err = SEMANTIC_UNDEFINED_VAR_ERROR;
                     break;
                 } else {
@@ -197,7 +231,6 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *token_list, tDLList *types_list,
             case INTEGER:
             case FLOAT:
                 if (div_by_zero_check(token_list->Act)) {
-                    // printf("%s %d\n", __FILE__, __LINE__);
                     err = SEMANTIC_ZERO_DIVIDION_ERROR;
                 }
                 exp_type = token_list->Act->token.type;
@@ -207,9 +240,6 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *token_list, tDLList *types_list,
                 DLInsertLast(EList, &(token_list->Act->token));
                 break;
         };
-        // fprintf(stdout, "searched type= %u\n", exp_type);
-
-        // DLInsertLast(EList, &(token_list->Act->token));
         token_list->Act = token_list->Act->rptr;
     }
 
@@ -249,33 +279,17 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *token_list, tDLList *types_list,
             case INTEGER:
             case FLOAT:
                 if (EList->Act->token.type != exp_type) {
-                    // printf("%s %d\n", __FILE__, __LINE__);
                     err = SEMANTIC_DATA_TYPES_ERROR;
                 }
                 EList->Act->token.type = I;
                 break;
         };
         EList->Act = EList->Act->rptr; 
-        // switch (EList->Act->token.type) {
-        //     case ID:
-        //         // EList->Act->token.type = exp_type
-        //         break;
-        //     case STR_END:
-        //     case INTEGER:
-        //     case FLOAT:
-        //         if (EList->Act->token.type != exp_type) {
-        //             return SEMANTIC_DATA_TYPES_ERROR;
-        //         }
-        //         EList->Act->token.type = I;
-        //         EList->Act = EList->Act->rptr; 
-        //         break;
-        // };
     }
     return err;
 }
 
 void pop(tDLList *L){
-    // Token ret_token = L->First->token;
     DLDeleteFirst (L);
 } 
 
@@ -310,46 +324,60 @@ int reduce(tDLList *stack, int *stack_size) {
     switch(s_token->token.type) {
         case I:       // EXPR -> i
             if (s_token->rptr->token.type == SHIFT && *stack_size >= 3) {
-                // printf("ops= %d  done_ops= %d stack_size= %d\n", ops, done_ops, *stack_size);
-                if (ops == 0) {
-                    double fl = strtod(s_token->token.data, NULL);
-                    fprintf(stdout, "PUSHS float@%a\n", fl);
-                }
+                generate_push_by_type(s_token);
                 insert_E(stack);
                 *stack_size-=1;
             } else {
                 return SYNTAX_ERROR;
             }
             break;
-        case ADD:     // EXPR -> EXPR + EXPR
-        case SUB:     // EXPR -> EXPR - EXPR
-        case MUL:     // EXPR -> EXPR * EXPR
-        case DIV:     // EXPR -> EXPR / EXPR
-            if (count_active_non_terms(stack) == 3) { // create tmp, 
+        case SUB:     // EXPR -> EXPR + EXPR
+            if (count_active_non_terms(stack) == 3) {
                 if (s_token->lptr->token.type == E && s_token->rptr->token.type == E) {
-                    if (s_token->rptr->token.data != NULL) {
-                        fprintf(stdout, "PUSHS int@%s\n", s_token->rptr->token.data);
-                    }
                     *stack_size-=3;
-                    arithm_template(s_token, stack_size);
+                    arithm_template(s_token);
                     pop(stack);
                     pop(stack);
                     pop(stack);
-                    pop(stack); // kostyl
+                    pop(stack);
                     insert_first_by_type(stack, E);
                 } else {
                     return SYNTAX_ERROR;
                 }
             } else if (count_active_non_terms(stack) == 2 && s_token->lptr != NULL) {
                 if (s_token->lptr->token.type == E && s_token->rptr->token.type == SHIFT) {
-                    fprintf(stdout, "PUSHS %s\n", "0");
-                    fprintf(stdout, "PUSHS %s\n", s_token->lptr->token.data);
+                    if (exp_type == INTEGER) {
+                        fprintf(stdout, "PUSHS int@%d\n", 0);
+                    } else if (exp_type == FLOAT) {
+                        fprintf(stdout, "PUSHS float@%a\n", 0.0);
+                        fprintf(stderr, "float@ (%f)\n", 0.0);
+                    }
+                    generate_push_by_type(s_token->lptr);
                     fprintf(stdout, "SUBS\n");
                     pop(stack);
                     pop(stack);
-                    pop(stack); // kostyl
+                    pop(stack);
                     insert_first_by_type(stack, E);
                     *stack_size-=2;
+                } else {
+                    return SYNTAX_ERROR;
+                }
+            } else {
+                return SYNTAX_ERROR;
+            }
+            break;
+        case ADD:     // EXPR -> EXPR - EXPR
+        case MUL:     // EXPR -> EXPR * EXPR
+        case DIV:     // EXPR -> EXPR / EXPR
+            if (count_active_non_terms(stack) == 3) { // create tmp, 
+                if (s_token->lptr->token.type == E && s_token->rptr->token.type == E) {
+                    *stack_size-=3;
+                    arithm_template(s_token);
+                    pop(stack);
+                    pop(stack);
+                    pop(stack);
+                    pop(stack);
+                    insert_first_by_type(stack, E);
                 } else {
                     return SYNTAX_ERROR;
                 }
@@ -365,28 +393,18 @@ int reduce(tDLList *stack, int *stack_size) {
         case NOT_EQ:  // EXPR -> EXPR != EXPR
             if (count_active_non_terms(stack) == 3 && (ops - done_ops == 1)) {
                 if (s_token->lptr->token.type == E && s_token->rptr->token.type == E) {
-                    // printf("ops= %d  done_ops= %d stack_size= %d\n", ops, done_ops, *stack_size);
-                    
-                    if (s_token->rptr->token.data != NULL) {
-                        fprintf(stdout, "PUSHS %s\n", s_token->rptr->token.data);
-                        fprintf(stdout, "PUSHS %s\n", s_token->lptr->token.data);
-                    }
-                    // fprintf(stdout, "DEFVAR LF@cond_res\n");
-                    // fprintf(stdout, "DEFVAR LF@%%retval%u\n", 1);
                     logic_template(s_token);
                     *stack_size-=3;
-                    // arithm_template(s_token, stack_size);
                     pop(stack);
                     pop(stack);
                     pop(stack);
-                    pop(stack); // kostyl
+                    pop(stack);
                     insert_first_by_type(stack, E);
                     done_ops+=1;
                 } else {
                     return SYNTAX_ERROR;
                 }
             } else {
-                // printf ("AAAAAAAAAAAAAAAAAAA\n");
                 return SEMANTIC_DATA_TYPES_ERROR;
             }
             break;
@@ -430,21 +448,14 @@ int expression(tDLList *types_list, unsigned exp_t, unsigned depth) {
     L.Act = L.First;
 
     insert_first_by_type(&stack, DOLLAR);
-
+    fprintf(stdout, "DEFVAR LF@&trash_bin\n");
     // printf("PrintExpList!!1!\n");
     // print_exp_list(&L);
-    // print_exp_list(&stack);
 
     tDLElemPtr s_token = get_non_term(&stack);
     int retval = 0;
     int stack_size = 1;
     do {
-        // printf("%s %d\n", __FILE__, __LINE__);
-
-        // printf("--start in= %d neterm= %d\n", L.Act->token.type, s_token->token.type);
-        // print_exp_list(&L);
-        // print_exp_list(&stack);
-
         unsigned prec_table_rule = get_prec_table_rule(s_token->token.type, L.Act->token.type);
 
         switch (prec_table_rule) {
@@ -455,7 +466,6 @@ int expression(tDLList *types_list, unsigned exp_t, unsigned depth) {
                 break;
             case SHIFT:
                 stack.Act = s_token;
-                // insert_first_by_type(&stack, SHIFT);
                 Token token;
                 token.type = SHIFT;
                 token.data = NULL;
@@ -471,28 +481,23 @@ int expression(tDLList *types_list, unsigned exp_t, unsigned depth) {
                 retval = reduce(&stack, &stack_size);
                 if (retval) {
                     exp_list_dtor(&stack, &L);
-                    // printf("%s %d\n", __FILE__, __LINE__);
                     return retval;
                 }
                 break;
             case NONE:
                 exp_list_dtor(&stack, &L);
-                // printf("%s %d\n", __FILE__, __LINE__);
                 return SYNTAX_ERROR;
             default:
                 exp_list_dtor(&stack, &L);
-                // printf("%s %d\n", __FILE__, __LINE__);
                 return SYNTAX_ERROR;
         };
-        // printf("--end-- next= %d\n", L.Act->token.type);
         // printf("---stack items---\n");
         // print_exp_list(&stack);
         
         s_token = get_non_term(&stack);
-        // printf("stack.F= %d  L.Act= %d\n", stack.First->token.type, L.Act->token.type);
     } while ((s_token->token.type != DOLLAR) || (L.Act->token.type != DOLLAR));
-    // fprintf(stdout, "PUSH LF@res\n");
     // printf("%s %d\n", __FILE__, __LINE__);
+    exp_type = 0;
     exp_list_dtor(&stack, &L);
 
     return 0; 

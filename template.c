@@ -110,21 +110,111 @@ void template_len() {
     fprintf(stdout, "DEFVAR LF@%%retval%u\n", 1);
     fprintf(stdout, "MOVE LF@%%retval%u LF@%%op%u\n", 1, 1);
     fprintf(stdout, "DEFVAR LF@!string_retval\n");
-    fprintf(stdout, "STRLEN LF@%%retval%u LF@!string_retval\n", 1);
+    fprintf(stdout, "STRLEN LF@!string_retval LF@%%retval%u\n", 1);
     fprintf(stdout, "POPFRAME\n");
     fprintf(stdout, "RETURN\n");
 }
 
-void template_substr() {
+void template_substr() {        // [y a h o r]
+                                //  0 1 2 3 4
     fprintf(stdout, "LABEL $len\n");
     fprintf(stdout, "PUSHFRAME\n");
-    fprintf(stdout, "DEFVAR LF@%%retval%u\n", 1);
-    fprintf(stdout, "MOVE LF@%%retval%u LF@%%op%u\n", 1, 1);
 
-    fprintf(stdout, "DEFVAR LF@!start\n");
-    fprintf(stdout, "DEFVAR LF@!string\n");
-    fprintf(stdout, "DEFVAR LF@!len\n");
+    fprintf(stdout, "DEFVAR LF@%%retval%u\n", 1);
+    fprintf(stdout, "MOVE LF@%%retval%u LF@%%op%u\n", 1, 1);    // string
+    fprintf(stdout, "DEFVAR LF@%%retval%u\n", 2);
+    fprintf(stdout, "MOVE LF@%%retval%u LF@%%op%u\n", 2, 2);    // i
+    fprintf(stdout, "DEFVAR LF@%%retval%u\n", 3);
+    fprintf(stdout, "MOVE LF@%%retval%u LF@%%op%u\n", 3, 3);    // n
+    fprintf(stdout, "DEFVAR LF@!bool_if\n");
+    fprintf(stdout, "DEFVAR LF@!ret_int\n");    // int returns 0/1
+    fprintf(stdout, "LT LF@!bool_if LF@%%retval%u int@0\n", 1);
+    fprintf(stdout, "JUMPIFEQ !chyba1 LF@!bool_if bool@true\n");
+    fprintf(stdout, "LT LF@!bool_if LF@%%retval%u int@0\n", 2);
+    fprintf(stdout, "JUMPIFEQ !chyba1 LF@!bool_if bool@true\n");
+    fprintf(stdout, "DEFVAR LF@!new_string%u\n", 1);
+    fprintf(stdout, "DEFVAR LF@!strlen\n");
+    fprintf(stdout, "STRLEN LF@!strlen LF@%%retval%u\n", 1);
+    fprintf(stdout, "DEFVAR LF@!new_strlen\n");
+    fprintf(stdout, "SUB LF@!new_strlen LF@!strlen int@1\n");
+    fprintf(stdout, "GT LF@!bool_if LF@%%retval%u LF@!new_strlen\n", 2);
+    fprintf(stdout, "JUMPIFEQ !chyba1 LF@!bool_if bool@true\n");
+
+    fprintf(stdout, "SUB LF@!new_strlen LF@!strlen LF@%%retval%u\n", 2);
+    fprintf(stdout, "GT LF@!bool_if LF@!new_strlen LF@%%retval%u\n", 3);
+    fprintf(stdout, "JUMPIFEQ !chyba2 LF@!bool_if bool@true\n");
+
+    fprintf(stdout, "LABEL !cont\n"); 
+
+    
+    fprintf(stdout, "EQ LF@!bool_if LF@%%retval%u int@0\n", 3);
+    fprintf(stdout, "JUMPIFEQ !chyba0 LF@!bool_if bool@true\n");
+
+    fprintf(stdout, "DEFVAR LF@!new_string%u\n", 2);
+
+    
+    fprintf(stdout, "GETCHAR LF@!new_string%u LF@%%retval%u LF@%%retval%u\n", 1, 1, 2); //  [ y 'a h o' r]
+    fprintf(stdout, "LABEL !cuklus\n");                                                 //    0  1 2 3 4  
+                                                                                        // new_str1 = a, new_str2 = null
+    fprintf(stdout, "JUMPIFEQ !end1 LF@%%retval%u LF@%%retval%u\n", 2, 3);    // end of cuklus
+    fprintf(stdout, "ADD LF@%%retval%u int@1\n", 2);    // i++
+    fprintf(stdout, "GETCHAR LF@!new_string%u LF@%%retval%u LF@%%retval%u\n", 2, 1, 2);
+    fprintf(stdout, "CONCAT LF@!new_string%u LF@!new_string%u LF@!new_string%u\n", 1, 1, 2);
+    fprintf(stdout, "JUMP !cuklus\n");  
+
+    fprintf(stdout, "LABEL !chyba1\n");
+    fprintf(stdout, "MOVE LF@!ret_int int@1\n");
+    fprintf(stdout, "PUSHS LF@!new_string%u\n", 1);
+    fprintf(stdout, "PUSHS LF@!ret_int\n");
+    fprintf(stdout, "POPFRAME\n");
+    fprintf(stdout, "RETURN\n");
+
+    fprintf(stdout, "LABEL !chyba2\n");
+    fprintf(stdout, "MOVE LF@%%retval%u LF@!new_strlen\n", 3);
+    fprintf(stdout, "JUMP !cont\n");
+
+    fprintf(stdout, "LABEL !chyba0\n");
+    fprintf(stdout, "MOVE LF@!ret_int int@0\n");
+    fprintf(stdout, "MOVE LF@!new_string%u string@\\000\n", 1);
+    fprintf(stdout, "PUSHS LF@!new_string%u\n", 1);
+    fprintf(stdout, "PUSHS LF@!ret_int\n");
+    fprintf(stdout, "POPFRAME\n");
+    fprintf(stdout, "RETURN\n");
+
+    fprintf(stdout, "LABEL !end1\n");
+    fprintf(stdout, "MOVE LF@!ret_int int@0\n");
+    fprintf(stdout, "PUSHS LF@!new_string%u\n", 1);
+    fprintf(stdout, "PUSHS LF@!ret_int\n");
+    fprintf(stdout, "POPFRAME\n");
+    fprintf(stdout, "RETURN\n");
 }
+/*               
+int substr(char *string, int i, int n) {
+    if (n < 0 || ((i < 0) || (i >= strlen(string)))) {
+        return 1;
+    }
+
+    if (n > strlen(string) - i) {
+        n = strlen(string) - i;
+    }
+    char *podstr;
+    char *time_str
+    while (i != n) {
+        time_str = getchar (string, i);
+        concat(podstr, time_str);
+        i++;
+    }
+    return 0;
+    return podstr;
+
+}
+
+*/
+
+
+
+
+
 
 void template_ord() {
     fprintf(stdout, "LABEL $ord\n");
