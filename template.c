@@ -62,7 +62,7 @@ void template_inputf() {
     fprintf(stdout, "LABEL $inputf\n");
     fprintf(stdout, "PUSHFRAME\n");
     fprintf(stdout, "DEFVAR LF@%%retval%u\n", 1);
-    fprintf(stdout, "READ LF@%%retval%u float64\n", 1);
+    fprintf(stdout, "READ LF@%%retval%u float\n", 1);
     fprintf(stdout, "DEFVAR LF@!retval%u$type\n", 1);
 
     fprintf(stdout, "TYPE LF@!retval%u$type LF@%%retval%u\n", 1, 1);

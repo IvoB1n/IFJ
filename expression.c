@@ -11,42 +11,56 @@ unsigned exp_type;
 
 void generate_str (tDLElemPtr s_token) { //add from hex to dec
     for (unsigned i = 1; i < s_token->token.data_size-2; i++) {
-        if ((s_token->token.data[i] >= 'a' && s_token->token.data[i] <= 'z') ||
-            (s_token->token.data[i] >= 'A' && s_token->token.data[i] <= 'Z')) {
-                fprintf(stdout, "%c", s_token->token.data[i]);
-        } else if (s_token->token.data[i] == '#') {
-            fprintf(stdout, "\\0%d", '#');
+        // if ((s_token->token.data[i] >= '0' && s_token->token.data[i] <= '9') ||
+        //     (s_token->token.data[i] >= 'a' && s_token->token.data[i] <= 'z') ||
+        //     (s_token->token.data[i] >= 'A' && s_token->token.data[i] <= 'Z')) {
+        //         fprintf(stdout, "%c", s_token->token.data[i]);
+        // } else 
+        if (s_token->token.data[i] == '#') {
+            fprintf(stdout, "\\%03d", '#');
         } else if (s_token->token.data[i] == ' ') {
-            fprintf(stdout, "\\0%d", ' ');
+            fprintf(stdout, "\\%03d", ' ');
         } else if (s_token->token.data[i] == '\\' && s_token->token.data[i+1] == '\\') {
-            fprintf(stdout, "\\0%d", '\\');
+            fprintf(stdout, "\\%03d", '\\');
             i+=1;
         } else if (s_token->token.data[i] == '\\' && s_token->token.data[i+1] == 'n') {
-            fprintf(stdout, "\\0%d", '\n');
+            fprintf(stdout, "\\%03d", '\n');
             i+=1;
         } else if (s_token->token.data[i] == '\\' && s_token->token.data[i+1] == 't') {
-            fprintf(stdout, "\\0%d", '\t');
+            fprintf(stdout, "\\%03d", '\t');
             i+=1;
-        } else if ((s_token->token.data_size-2-i) >= 4) {
+        } else if (s_token->token.data[i] == '\\' && s_token->token.data[i+1] == '\"') {
+            fprintf(stdout, "\"");
+            i+=1;
+        } 
+        else if ((s_token->token.data_size-1-i) >= 4) {
             if(s_token->token.data[i] == '\\' && s_token->token.data[i+1] == 'x') {
                 char s[2];
                 s[0] = s_token->token.data[i+2];
                 s[1] = s_token->token.data[i+3];
                 int x;
                 sscanf(s, "%x", &x);
-                if (x < 100) {
-                    printf("\\0%u", x);
-                } else {
-                    printf("\\%u", x);
-                }
+                // if (x < 10) {
+                printf("\\%03u", x);
+                // } else if (x < 100) {
+                    // printf("\\%03u", x);
+                // } else {
+                    // printf("\\%u", x);
+                // }
+                i+=3;
+            } else {
+                fprintf(stdout, "%c", s_token->token.data[i]);
             }
-            i+=3;
+        } else {
+            fprintf(stdout, "%c", s_token->token.data[i]);
         }
     }
     fprintf(stdout, "\n");
 }
 
-void generate_push_by_type(tDLElemPtr s_token) {
+void generate_push_by_type(tDLElemPtr s_token, unsigned *depth ) {
+    unsigned d = *depth; // TODO: remove
+    d++; // TODO: remove
     if (((s_token->token.data[0] >= 'a' && s_token->token.data[0] <= 'z') ||
          (s_token->token.data[0] >= 'A' && s_token->token.data[0] <= 'Z'))) {
         fprintf(stdout, "PUSHS LF@%s\n", s_token->token.data);
@@ -96,32 +110,37 @@ void arithm_template(tDLElemPtr s_token) {
                 fprintf(stdout, "DEFVAR LF@&div_zero_type\n");
                 fprintf(stdout, "POPS LF@&div_zero_number\n");
                 fprintf(stdout, "TYPE LF@&div_zero_type LF@&div_zero_number\n");
-                fprintf(stdout, "JUMPIFEQ &div_zero_label_float LF@&div_zero_type string@float64\n");
+                fprintf(stdout, "JUMPIFEQ &div_zero_label_float LF@&div_zero_type string@float\n");
                 fprintf(stdout, "JUMPIFEQ &div_zero_label_int LF@&div_zero_type string@int\n");
                 fprintf(stdout, "EXIT int@7\n");
 
                 fprintf(stdout, "LABEL &div_zero_label_float\n");
-                fprintf(stdout, "JUMPIFNEQ &div_zero_label_end LF@&div_zero_number float@0x0p+0\n");
-                fprintf(stdout, "EXIT int@9\n");
+                fprintf(stdout, "JUMPIFEQ &div_zero_label_err LF@&div_zero_number float@0x0p+0\n");
+                fprintf(stdout, "PUSHS LF@&div_zero_number\n");
+                fprintf(stdout, "DIVS\n");
+                fprintf(stdout, "JUMP &div_zero_label_end\n");
 
                 fprintf(stdout, "LABEL &div_zero_label_int\n");
-                fprintf(stdout, "JUMPIFNEQ &div_zero_label_end LF@&div_zero_number int@0\n");
+                fprintf(stdout, "JUMPIFEQ &div_zero_label_err LF@&div_zero_number int@0\n");
+                fprintf(stdout, "PUSHS LF@&div_zero_number\n");
+                fprintf(stdout, "IDIVS\n");
+                fprintf(stdout, "JUMP &div_zero_label_end\n");
+
+                fprintf(stdout, "LABEL &div_zero_label_err\n");
                 fprintf(stdout, "EXIT int@9\n");
 
                 fprintf(stdout, "LABEL &div_zero_label_end\n");
-                fprintf(stdout, "PUSHS LF@&div_zero_number\n");
-                fprintf(stdout, "DIVS\n");
                 break;
         };
         done_ops+=1;
     } else {
-        fprintf(stdout, "DEFVAR LF@^s_op%u\n", 1);
-        fprintf(stdout, "DEFVAR LF@^s_op%u\n", 2);
-        fprintf(stdout, "DEFVAR LF@^s_res\n");
-        fprintf(stdout, "POPS LF@^s_op%u\n", 2);
-        fprintf(stdout, "POPS LF@^s_op%u\n", 1);
-        fprintf(stdout, "CONCAT LF@^s_res LF@^s_op%u LF@^s_op%u\n", 1, 2);
-        fprintf(stdout, "PUSH LF@^s_res\n");
+        fprintf(stdout, "DEFVAR LF@&s_op%u\n", 1);
+        fprintf(stdout, "DEFVAR LF@&s_op%u\n", 2);
+        fprintf(stdout, "DEFVAR LF@&s_res\n");
+        fprintf(stdout, "POPS LF@&s_op%u\n", 2);
+        fprintf(stdout, "POPS LF@&s_op%u\n", 1);
+        fprintf(stdout, "CONCAT LF@&s_res LF@&s_op%u LF@&s_op%u\n", 1, 2);
+        fprintf(stdout, "PUSHS LF@&s_res\n");
     }
 }
 
@@ -341,12 +360,12 @@ int count_active_non_terms(tDLList *L){
    return count;
 }
 
-int reduce(tDLList *stack, int *stack_size) {
+int reduce(tDLList *stack, int *stack_size, unsigned* depth) {
     tDLElemPtr s_token = get_non_term(stack);
     switch(s_token->token.type) {
         case I:       // EXPR -> i
             if (s_token->rptr->token.type == SHIFT && *stack_size >= 3) {
-                generate_push_by_type(s_token);
+                generate_push_by_type(s_token, depth);
                 insert_E(stack);
                 *stack_size-=1;
             } else {
@@ -374,7 +393,7 @@ int reduce(tDLList *stack, int *stack_size) {
                         fprintf(stdout, "PUSHS float@%a\n", 0.0);
                         fprintf(stderr, "float@ (%f)\n", 0.0);
                     }
-                    generate_push_by_type(s_token->lptr);
+                    generate_push_by_type(s_token->lptr, depth);
                     fprintf(stdout, "SUBS\n");
                     pop(stack);
                     pop(stack);
@@ -470,7 +489,7 @@ int expression(tDLList *types_list, unsigned exp_t, unsigned depth) {
     L.Act = L.First;
 
     insert_first_by_type(&stack, DOLLAR);
-    fprintf(stdout, "DEFVAR LF@&trash_bin\n");
+    // fprintf(stdout, "DEFVAR LF@&trash_bin\n");
     // printf("PrintExpList!!1!\n");
     // print_exp_list(&L);
 
@@ -500,7 +519,7 @@ int expression(tDLList *types_list, unsigned exp_t, unsigned depth) {
                 stack_size+=2;
                 break;
             case REDUCE:
-                retval = reduce(&stack, &stack_size);
+                retval = reduce(&stack, &stack_size, &depth);
                 if (retval) {
                     exp_list_dtor(&stack, &L);
                     return retval;
