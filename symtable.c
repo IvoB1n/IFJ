@@ -34,7 +34,7 @@ int print_sym_table_items (Sym_table *table) {
    // if (table == NULL) {
    //     return INTERNAL_ERROR;
    // }
-    printf("//////////////////////////////  \n");
+    fprintf(stderr, "//////////////////////////////  \n");
 
     Sym_table_item *item ;//= (*table)[0];
     //Sym_table_item *next_item = NULL;
@@ -46,14 +46,14 @@ int print_sym_table_items (Sym_table *table) {
         }
        // next_item = item->nextPtr;
         while(item != NULL) {
-            printf("\n");
-            printf("item_name - %s   item_depth - %d   item_type - %u\n", item->name, item->depth, item->value.var.type);
-            printf("\n");
+            fprintf(stderr, "\n");
+            fprintf(stderr, "item_name - %s   item_depth - %d   item_type - %u\n", item->name, item->depth, item->value.var.type);
+            fprintf(stderr, "\n");
             item = item->nextPtr;
         }
        
     }
-    printf("////////////////////////////// \n");
+    fprintf(stderr, "////////////////////////////// \n");
     return 0;
 }
 

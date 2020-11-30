@@ -11,11 +11,6 @@ unsigned exp_type;
 
 void generate_str (tDLElemPtr s_token) { //add from hex to dec
     for (unsigned i = 1; i < s_token->token.data_size-2; i++) {
-        // if ((s_token->token.data[i] >= '0' && s_token->token.data[i] <= '9') ||
-        //     (s_token->token.data[i] >= 'a' && s_token->token.data[i] <= 'z') ||
-        //     (s_token->token.data[i] >= 'A' && s_token->token.data[i] <= 'Z')) {
-        //         fprintf(stdout, "%c", s_token->token.data[i]);
-        // } else 
         if (s_token->token.data[i] == '#') {
             fprintf(stdout, "\\%03d", '#');
         } else if (s_token->token.data[i] == ' ') {
@@ -40,13 +35,7 @@ void generate_str (tDLElemPtr s_token) { //add from hex to dec
                 s[1] = s_token->token.data[i+3];
                 int x;
                 sscanf(s, "%x", &x);
-                // if (x < 10) {
                 printf("\\%03u", x);
-                // } else if (x < 100) {
-                    // printf("\\%03u", x);
-                // } else {
-                    // printf("\\%u", x);
-                // }
                 i+=3;
             } else {
                 fprintf(stdout, "%c", s_token->token.data[i]);
@@ -59,11 +48,17 @@ void generate_str (tDLElemPtr s_token) { //add from hex to dec
 }
 
 void generate_push_by_type(tDLElemPtr s_token, unsigned *depth ) {
-    unsigned d = *depth; // TODO: remove
-    d++; // TODO: remove
+    Sym_table_item *item;
     if (((s_token->token.data[0] >= 'a' && s_token->token.data[0] <= 'z') ||
          (s_token->token.data[0] >= 'A' && s_token->token.data[0] <= 'Z'))) {
-        fprintf(stdout, "PUSHS LF@%s\n", s_token->token.data);
+            // print_sym_table_items(&asm_table);
+        item = sym_table_search_item(&asm_table, s_token->token.data, *depth);
+        if (item == NULL) {
+            return;
+        } else {
+            unsigned var_depth = item->depth;
+            fprintf(stdout, "PUSHS LF@%s%u\n", s_token->token.data, var_depth);
+        }
     } else if (exp_type == INTEGER) {
         fprintf(stdout, "PUSHS int@%s\n", s_token->token.data);
     } else if (exp_type == FLOAT) {
@@ -106,41 +101,25 @@ void arithm_template(tDLElemPtr s_token) {
                 fprintf(stdout, "MULS\n");
                 break;
             case DIV:
-                fprintf(stdout, "DEFVAR LF@&div_zero_number\n");
-                fprintf(stdout, "DEFVAR LF@&div_zero_type\n");
-                fprintf(stdout, "POPS LF@&div_zero_number\n");
-                fprintf(stdout, "TYPE LF@&div_zero_type LF@&div_zero_number\n");
-                fprintf(stdout, "JUMPIFEQ &div_zero_label_float LF@&div_zero_type string@float\n");
-                fprintf(stdout, "JUMPIFEQ &div_zero_label_int LF@&div_zero_type string@int\n");
-                fprintf(stdout, "EXIT int@7\n");
+                fprintf(stdout, "POPS GF@&div_zero_number\n");
 
-                fprintf(stdout, "LABEL &div_zero_label_float\n");
-                fprintf(stdout, "JUMPIFEQ &div_zero_label_err LF@&div_zero_number float@0x0p+0\n");
-                fprintf(stdout, "PUSHS LF@&div_zero_number\n");
-                fprintf(stdout, "DIVS\n");
-                fprintf(stdout, "JUMP &div_zero_label_end\n");
-
-                fprintf(stdout, "LABEL &div_zero_label_int\n");
-                fprintf(stdout, "JUMPIFEQ &div_zero_label_err LF@&div_zero_number int@0\n");
-                fprintf(stdout, "PUSHS LF@&div_zero_number\n");
-                fprintf(stdout, "IDIVS\n");
-                fprintf(stdout, "JUMP &div_zero_label_end\n");
-
-                fprintf(stdout, "LABEL &div_zero_label_err\n");
-                fprintf(stdout, "EXIT int@9\n");
-
-                fprintf(stdout, "LABEL &div_zero_label_end\n");
+                if (exp_type == FLOAT) {
+                    fprintf(stdout, "JUMPIFEQ &div_zero_label_err GF@&div_zero_number float@0x0p+0\n");
+                    fprintf(stdout, "PUSHS GF@&div_zero_number\n");
+                    fprintf(stdout, "DIVS\n");
+                } else if (exp_type == INTEGER) {
+                    fprintf(stdout, "JUMPIFEQ &div_zero_label_err GF@&div_zero_number int@0\n");
+                    fprintf(stdout, "PUSHS GF@&div_zero_number\n");
+                    fprintf(stdout, "IDIVS\n");
+                }
                 break;
         };
         done_ops+=1;
     } else {
-        fprintf(stdout, "DEFVAR LF@&s_op%u\n", 1);
-        fprintf(stdout, "DEFVAR LF@&s_op%u\n", 2);
-        fprintf(stdout, "DEFVAR LF@&s_res\n");
-        fprintf(stdout, "POPS LF@&s_op%u\n", 2);
-        fprintf(stdout, "POPS LF@&s_op%u\n", 1);
-        fprintf(stdout, "CONCAT LF@&s_res LF@&s_op%u LF@&s_op%u\n", 1, 2);
-        fprintf(stdout, "PUSHS LF@&s_res\n");
+        fprintf(stdout, "POPS GF@&str_concat_2\n");
+        fprintf(stdout, "POPS GF@&str_concat_1\n");
+        fprintf(stdout, "CONCAT GF@&str_concat_res GF@&str_concat_1 GF@&str_concat_2\n");
+        fprintf(stdout, "PUSHS GF@&str_concat_res\n");
     }
 }
 
@@ -244,6 +223,7 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *token_list, tDLList *types_list,
             case ID:
                 item = sym_table_search_item(&sym_table, token_list->Act->token.data, depth);
                 if (item == NULL) {
+                    fprintf(stderr, "SEMANTIC_UNDEF_EXP\n");
                     err = SEMANTIC_UNDEFINED_VAR_ERROR;
                     break;
                 } else {
