@@ -1,7 +1,7 @@
-// compiler 2
+//
 package main
 
-func main() {
-	for 0 != 0 {
+func main () {
+	for ;0!=0; {
 	}
 }

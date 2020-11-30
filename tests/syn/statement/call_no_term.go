@@ -1,4 +1,4 @@
-//compiler 2 ( consider extensions )
+//compiler 2 TODO consider extensions
 //
 package main
 
