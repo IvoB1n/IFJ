@@ -662,9 +662,14 @@ int sym_item_init(Sym_table_item *item_ptr) {
 int fill_function_prototype_list() {
     int retval = 0;
     Token token;
+    //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
     retval = insert_embedded_functions();
+        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
     if (retval) {
+            //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
         return retval;
     }
 
@@ -676,13 +681,17 @@ int fill_function_prototype_list() {
         if (token.type == FUNC) {
             //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             Sym_table_item *sym_table_item_ptr = malloc(sizeof(Sym_table_item));
+            //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             if (!sym_table_item_ptr) {
+                //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                 clear_item(sym_table_item_ptr);
                 return INTERNAL_ERROR;
             }
-
+            //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             retval = sym_item_init(sym_table_item_ptr);
+            //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             if (retval) {
+                //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                 clear_item(sym_table_item_ptr);
                 return retval;
             }
@@ -702,13 +711,15 @@ int fill_function_prototype_list() {
             //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             token.type = ID_FUNC;
             //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-            sym_table_item_ptr->name = malloc(sizeof(token.data));
+            sym_table_item_ptr->name = malloc(token.data_size);
             if (!(sym_table_item_ptr->name)) {
                 clear_item(sym_table_item_ptr);
                 return INTERNAL_ERROR;
             }
+
             //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             strcpy(sym_table_item_ptr->name, token.data);
+            //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
             //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             sem_get_next_token(&token);
@@ -716,7 +727,7 @@ int fill_function_prototype_list() {
                 clear_item(sym_table_item_ptr);
                 return SYNTAX_ERROR;
             }
-                //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+            //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
             if (sem_param_rule(&token, sym_table_item_ptr, IN_VAR)) {
                 clear_item(sym_table_item_ptr);

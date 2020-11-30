@@ -1,1 +1,11 @@
 void print_head();
+void template_inputs();
+void template_inputi();
+void template_inputf();
+void template_print(unsigned i);
+void template_int2float();
+void template_float2int();
+void template_len();
+void template_substr();
+void template_ord();
+void template_chr();

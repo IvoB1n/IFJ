@@ -69,7 +69,7 @@ void generate_push_by_type(tDLElemPtr s_token, unsigned *depth ) {
     } else if (exp_type == FLOAT) {
         double fl = strtod(s_token->token.data, NULL);
         fprintf(stdout, "PUSHS float@%a\n", fl);
-        fprintf(stderr, " float@ (%f)\n", fl);
+        fprintf(stderr, " float@%a (%f)\n", fl, fl);
     } else if (exp_type == STR_END) {
         fprintf(stdout, "PUSHS string@");
         generate_str(s_token);
