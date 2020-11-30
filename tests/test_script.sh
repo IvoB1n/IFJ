@@ -74,16 +74,23 @@ test() {
             echo "                        /"
         elif [ "$less_flag" = "-go" ]; then
             echo "$1"
-            ./compiler < "$1" >generated.code 2>/dev/null
-            # ./tests/ic20int generated_code.code
-            ret_val=$?
+            rm gen.code
+            ./compiler < "$1" >gen.code #2>/dev/null
+            ret_valcom=$?
+            echo " ~~~~~~~~~ "
+            ./ic20int gen.code
+            echo ""
+            echo " ~~~~~~~~~ "
+            ret_valint=$?
+            
             line=$(head -n 1 $1)
-            echo "  "
-            echo "return value:        $ret_val "
+            echo "return value comp:   $ret_valcom "
             echo "expected: $line "
+            echo "return value inter:  $ret_valint "
+
         else 
             echo "$1"
-            ./compiler < "$1" > output.out
+            ./compiler < "$1"
             ret_val=$?
             line=$(head -n 1 $1)
             echo "  "
