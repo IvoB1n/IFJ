@@ -1,4 +1,4 @@
-//
+// potom no ne fakt
 package main
 
 func alpha () (int, int) {

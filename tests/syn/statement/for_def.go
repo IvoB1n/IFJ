@@ -1,7 +1,12 @@
 //
+
 package main
 
 func main () {
-	for a:=1;a==0; {
+	a:=5
+	b:=a+a
+	print(b, "\n")
+	for a:=1;a==1; {
+		print(a)
 	}
 }

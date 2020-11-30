@@ -1,4 +1,6 @@
-//
+// 15 -10 -150 0
+//+1.275000e+001 +2.500000e+000 +3.187500e+001 +2.500000e+000
+//helloworld
 package main
 
 func main () {
@@ -6,8 +8,8 @@ func main () {
 	b := 5
 	c := 2.5
 	d := 10.25
-	e := "hello"
-	f := "world"
+	e := "hello" + " " 
+	f := "world" + " " + "!"
 
 	a = a + b
 	print(a, " ")

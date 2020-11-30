@@ -1,4 +1,4 @@
-//
+// potom
 package main
 
 func main () {

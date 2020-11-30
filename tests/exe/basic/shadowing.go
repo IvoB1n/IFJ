@@ -3,20 +3,20 @@ package main
 
 func main () {
 	a := 30
-	print(a)
+	print(a, "\n")
 	for a:=10;a>0;a=a-1 {
-		print(a)
+		print(a, "\n")
 		a := 3.14
-		print(a)
+		print(a, "\n")
 		if a>5.0 {
-			print(a)
+			print(a, "\n")
 			a:="hello"
-			print(a)
+			print(a, "\n")
 		} else {
-			print(a)
+			print(a, "\n")
 			a:="world"
-			print(a)
+			print(a, "\n")
 		}
 	}
-	print(a)
+	print(a, "\n")
 }
