@@ -10,6 +10,9 @@
 #define FUNC_CALL 100
 
 tDLList if_stack, else_stack, for_stack;
+unsigned func_call_num = 1;
+tDLElemPtr token_func_start;
+unsigned num_of_fors, num_of_ifs;
 
 int push_stack(unsigned *curr_num, tDLList *stack) {
     Token *curr_token = malloc(sizeof(Token));
@@ -26,7 +29,6 @@ int push_stack(unsigned *curr_num, tDLList *stack) {
 void pop_stack(unsigned *pop_num, tDLList *stack) {
     *pop_num = stack->Last->token.type;
   //  printf("pop %u\n", *pop_num);
-
     DLDeleteLast(stack);
 }
 
@@ -83,19 +85,21 @@ int increase_depth(unsigned *depth) {
         }
         strcpy(asm_item->name, "_\0");
         sym_table_insert_item(&asm_table, asm_item);
-        fprintf(stdout, "DEFVAR LF@%s%u\n", asm_item->name, asm_item->depth);
+        if (func_call_num == 1) {
+            fprintf(stdout, "DEFVAR LF@%s%u\n", asm_item->name, asm_item->depth);
+        }
     }
-  //  print_sym_table_items(&sym_table);
+
     return 0;
 }
 
 void decrease_depth(unsigned *depth) {
    
- //   fprintf(stderr, "clean depth = %u\n", *depth);
+    //fprintf(stderr, "clean depth = %u\n", *depth);
        // //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-
+    print_sym_table_items(&sym_table);
     sym_table_delete_on_depth(&sym_table, *depth);
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
     (*depth)--;
     //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
@@ -133,7 +137,7 @@ int expression_rule(Token *token, tDLList *list, unsigned depth, unsigned is_fun
         DLPred(&token_list);
     }
     DLPred(&token_list);
-    return expression(list, is_func, depth);
+    return expression(list, is_func, depth, func_call_num);
 }
 
 /*  TYPE -> int
@@ -177,8 +181,12 @@ int type_next_rule(Token *token, unsigned *ret_val_num) {
     if (retval) {
         return retval;
     }
-    fprintf(stdout, "DEFVAR LF@%%retval%u\n", *ret_val_num);
-    fprintf(stdout, "MOVE LF@%%retval%u nil@nil\n", *ret_val_num);
+    if (func_call_num == 1) {
+        fprintf(stdout, "DEFVAR LF@%%retval%u\n", *ret_val_num);
+    }
+    else {
+        fprintf(stdout, "MOVE LF@%%retval%u nil@nil\n", *ret_val_num);
+    }
     (*ret_val_num)++;
     retval = type_next_rule(token, ret_val_num);
     
@@ -212,9 +220,12 @@ int return_types_rule(Token *token ) {
         if (retval) {
             return retval;
         }
-
-    fprintf(stdout, "DEFVAR LF@%%retval%u\n", ret_val_num);
-    fprintf(stdout, "MOVE LF@%%retval%u nil@nil\n", ret_val_num);
+    if (func_call_num == 1) {
+        fprintf(stdout, "DEFVAR LF@%%retval%u\n", ret_val_num);
+    }
+    else {
+        fprintf(stdout, "MOVE LF@%%retval%u nil@nil\n", ret_val_num);
+    }
     ret_val_num++;
         retval = type_next_rule(token, &ret_val_num);
         if (retval) {
@@ -259,8 +270,12 @@ int param_next_rule(Token *token, unsigned depth, unsigned *var_num) {
     }
 
     //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-    fprintf(stdout, "DEFVAR LF@%s%u\n", token->data, depth);
-    fprintf(stdout, "MOVE LF@%s%u LF@%%op%u\n", token->data, depth, *var_num);
+    if (func_call_num == 1) {
+        fprintf(stdout, "DEFVAR LF@%s%u\n", token->data, depth);
+    }
+    else {
+        fprintf(stdout, "MOVE LF@%s%u LF@%%op%u\n", token->data, depth, *var_num);
+    }
     (*var_num)++;
     Sym_table_item *var_item = malloc(sizeof(Sym_table_item));
     if (!var_item) {
@@ -329,9 +344,13 @@ int param_rule(Token *token, unsigned depth) {
         return SYNTAX_ERROR;
     }
 
-//fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-    fprintf(stdout, "DEFVAR LF@%s%u\n", token->data, depth);
-    fprintf(stdout, "MOVE LF@%s%u LF@%%op%u\n", token->data, depth, var_num);
+//fprintf(stderr,_ "%s %d\n", __FILE__, __LINE__);
+    if (func_call_num  == 1) {
+        fprintf(stdout, "DEFVAR LF@%s%u\n", token->data, depth);
+    }
+    else {
+        fprintf(stdout, "MOVE LF@%s%u LF@%%op%u\n", token->data, depth, var_num);
+    }
     var_num++;
 
     Sym_table_item *var_item = malloc(sizeof(Sym_table_item));
@@ -481,7 +500,9 @@ int else_rule(Token *token, unsigned depth, char *curr_func_name, int *num_of_re
     unsigned if_num = 0;
     pop_stack(&if_num, &if_stack);
     if (token->type == END_OF_LINE) {
-        fprintf(stdout, "LABEL ?if_%s_%u\n", curr_func_name, if_num);
+        if (func_call_num > 1) {
+            fprintf(stdout, "LABEL ?if_%s_%u\n", curr_func_name, if_num);
+        }
         return 0;
     }
 
@@ -493,8 +514,10 @@ int else_rule(Token *token, unsigned depth, char *curr_func_name, int *num_of_re
     if (retval) {
         return retval;
     }
-    fprintf(stdout, "JUMP ?else_%s_%u\n", curr_func_name, if_num);
-    fprintf(stdout, "LABEL ?if_%s_%u\n", curr_func_name, if_num);
+    if (func_call_num > 1) {
+        fprintf(stdout, "JUMP ?else_%s_%u\n", curr_func_name, if_num);
+        fprintf(stdout, "LABEL ?if_%s_%u\n", curr_func_name, if_num);
+    }
    
     get_next_token(token);
     if (token->type != CURLY_BR_L) {
@@ -519,7 +542,9 @@ int else_rule(Token *token, unsigned depth, char *curr_func_name, int *num_of_re
 
    // unsigned else_num = 0;
     pop_stack(&if_num, &else_stack);
-    fprintf(stdout, "LABEL ?else_%s_%u\n", curr_func_name, if_num);
+    if (func_call_num > 1) {
+        fprintf(stdout, "LABEL ?else_%s_%u\n", curr_func_name, if_num);
+    }
 
     get_next_token(token);
     if (token->type != END_OF_LINE) {
@@ -594,15 +619,17 @@ int for_last_rule(Token *token, unsigned depth) {
             return retval;
         }
 
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         retval = check_types_in_assignment(&left_list, &right_list, depth);
         DLLast(&left_list);
         while (left_list.Act) {
-            //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             Sym_table_item *item = sym_table_search_item(&asm_table, left_list.Act->token.data, depth);
-            //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-            fprintf(stdout, "POPS LF@%s%u\n", item->name, item->depth);
-            //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+            if (func_call_num > 1) {
+                fprintf(stdout, "POPS LF@%s%u\n", item->name, item->depth);
+            }
+            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             DLPred(&left_list);
         }
         
@@ -659,10 +686,12 @@ int func_call(Token *token, tDLList *list, unsigned depth) {
    
     int retval = 0;
     if (token->type == ROUND_BR_L) {
-        fprintf(stdout, "CREATEFRAME\n");
+        if (func_call_num > 1) {
+            //fprintf(stdout, "CREATEFRAME\n");
+        }
         get_next_token(token);
         if (token->type == ROUND_BR_R) {
-           // fprintf(stdout, "CREATEFRAME\n");
+            
             Sym_table_item *item =  sym_table_search_item(&sym_table, func_name, depth);
             if (item) {
                 return SEMANTIC_OTHER_ERRORS;
@@ -680,7 +709,12 @@ int func_call(Token *token, tDLList *list, unsigned depth) {
             if (strcmp(func_name, "print\0") == 0) {
                 return FUNC_CALL;
             }
-            fprintf(stdout, "CALL $%s\n", func_name);
+            if (func_call_num > 1) {
+                fprintf(stdout, "CREATEFRAME\n");
+            }
+            if (func_call_num > 1) {
+                fprintf(stdout, "CALL $%s\n", func_name);
+            }
             return FUNC_CALL;
         }
         else {
@@ -722,13 +756,17 @@ int func_call(Token *token, tDLList *list, unsigned depth) {
             }
 
             if (strcmp(func_name, "print\0") != 0) {
-               // fprintf(stdout, "CREATEFRAME\n");
+                if (func_call_num > 1) {
+                    fprintf(stdout, "CREATEFRAME\n");
+                }
                 unsigned i;
                 for (i = 0; i < item->value.func.num_in_var; i++) {
                     Token token_return = {0, NULL, 0};
                     token_return.type = item->value.func.in_var_list[i];
-                    DLInsertLast(&func_input_list_left, &token_return); 
-                    fprintf(stdout, "DEFVAR TF@%%op%u\n", i + 1);
+                    DLInsertLast(&func_input_list_left, &token_return);
+                    if (func_call_num > 1) {
+                        fprintf(stdout, "DEFVAR TF@%%op%u\n", i + 1);
+                    }
                 }
 
                 retval = check_types_in_assignment(&func_input_list_left, &func_input_list_right, 0);
@@ -740,10 +778,14 @@ int func_call(Token *token, tDLList *list, unsigned depth) {
 
                 i = item->value.func.num_in_var;
                 while (i) {
-                    fprintf(stdout, "POPS TF@%%op%u\n", i);
+                    if (func_call_num > 1) {
+                        fprintf(stdout, "POPS TF@%%op%u\n", i);
+                    }
                     i--;
                 }
-                fprintf(stdout, "CALL $%s\n", func_name);
+                if (func_call_num > 1) {
+                    fprintf(stdout, "CALL $%s\n", func_name);
+                }
             }
             else {
                // //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
@@ -752,22 +794,25 @@ int func_call(Token *token, tDLList *list, unsigned depth) {
                // //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                 static unsigned print_num;
                 unsigned i = 1;
-              //  fprintf(stdout, "CREATEFRAME\n");
+                if (func_call_num > 1) {
+                    fprintf(stdout, "CREATEFRAME\n");
+                }
                 while (func_input_list_right.Act) {
                ///     //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-                    
-                    fprintf(stdout, "DEFVAR TF@%%op%u\n", i);
+                    if (func_call_num > 1) {
+                        fprintf(stdout, "DEFVAR TF@%%op%u\n", i);
+                    }
                     //fprintf(stdout, "POPS TF@%%op%u\n", i);
                     i++;
                     DLPred(&func_input_list_right);
                 }
                 //for (unsigned n = i - 1; n > 0; n--) {
                 print_num++;
-                template_print(i);
+                template_print(i, func_call_num);
                // fprintf(stdout, "LABEL !!!end")
                 //}
                 
-                //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+                fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             }
 
             DLDisposeList(&func_input_list_left);
@@ -781,7 +826,7 @@ int func_call(Token *token, tDLList *list, unsigned depth) {
 
 int was_not_declared(tDLList *list, unsigned depth) {
     DLFirst(list);
-    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+    //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     print_sym_table_items(&sym_table);
     while (list->Act != NULL) {
         if (sym_table_search_item(&sym_table, list->Act->token.data, depth) == NULL) {
@@ -791,7 +836,7 @@ int was_not_declared(tDLList *list, unsigned depth) {
         DLSucc(list);
         fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     }
-    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+    //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     return 1;
 }
 
@@ -811,6 +856,7 @@ int was_not_declared_on_lvl(tDLList *list, unsigned depth) {
 int insert_new_vars(tDLList *left_list, tDLList *right_list, unsigned depth) {
     DLFirst(left_list);
     DLFirst(right_list);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
     while (left_list->Act && right_list->Act) {
         Sym_table_item *item = init_search_item(&sym_table, left_list->Act->token.data, depth);
@@ -819,6 +865,7 @@ int insert_new_vars(tDLList *left_list, tDLList *right_list, unsigned depth) {
             DLSucc(right_list);
             continue;
         }
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
         left_list->Act->token.type = right_list->Act->token.type;
        
@@ -842,10 +889,12 @@ int insert_new_vars(tDLList *left_list, tDLList *right_list, unsigned depth) {
             return retval;
         }
 
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         if (init_search_item(&asm_table, left_list->Act->token.data, depth) == NULL) {
-            fprintf(stdout, "DEFVAR LF@%s%u\n", left_list->Act->token.data, depth);
-            //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+            if (func_call_num == 1) {
+                fprintf(stdout, "DEFVAR LF@%s%u\n", left_list->Act->token.data, depth);
+            }
+            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             Sym_table_item *asm_item = malloc(sizeof(Sym_table_item));
             if (!asm_item) {
                 return INTERNAL_ERROR;
@@ -859,7 +908,7 @@ int insert_new_vars(tDLList *left_list, tDLList *right_list, unsigned depth) {
             asm_item->depth = depth;
             sym_table_insert_item(&asm_table, asm_item);
         }
-
+        print_sym_table_items(&sym_table);
         DLSucc(left_list);
         DLSucc(right_list);
     }
@@ -872,6 +921,7 @@ int insert_new_vars(tDLList *left_list, tDLList *right_list, unsigned depth) {
 */
 int assignment_rule(Token *token, unsigned depth) {
     int retval = 0;
+    unsigned equal;
 
     tDLList assign_left_list, assign_right_list;
     DLInitList(&assign_left_list);
@@ -896,7 +946,8 @@ int assignment_rule(Token *token, unsigned depth) {
             return retval;
         }
 
-        switch (assign_sym_rule(token)) {
+        equal = assign_sym_rule(token);
+        switch (equal) {
             case DECLARE:
                 if (was_not_declared_on_lvl(&assign_left_list, depth) == 1) {
                     fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
@@ -925,12 +976,14 @@ int assignment_rule(Token *token, unsigned depth) {
             return retval;
         }
     }
-   
-    retval = insert_new_vars(&assign_left_list, &assign_right_list, depth);
-    
-    if (retval) {
-        DLDisposeList(&assign_left_list);
-        DLDisposeList(&assign_right_list);
+    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
+    if (equal == DECLARE) {
+        retval = insert_new_vars(&assign_left_list, &assign_right_list, depth);
+        if (retval) {
+            DLDisposeList(&assign_left_list);
+            DLDisposeList(&assign_right_list);
+        }
     }
 
     retval = check_types_in_assignment(&assign_left_list, &assign_right_list, depth);
@@ -943,12 +996,14 @@ int assignment_rule(Token *token, unsigned depth) {
     DLLast(&assign_left_list);
     //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     while (assign_left_list.Act) {
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
        // print_sym_table_items(&asm_table);
         Sym_table_item *asm_item = sym_table_search_item(&asm_table, assign_left_list.Act->token.data, depth);
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-        fprintf(stdout, "POPS LF@%s%u\n", asm_item->name, asm_item->depth);
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+        if (func_call_num > 1)  {
+            fprintf(stdout, "POPS LF@%s%u\n", asm_item->name, asm_item->depth);
+        }
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         DLPred(&assign_left_list);
     }
 
@@ -972,7 +1027,7 @@ int statement_rule(Token *token, unsigned depth, char *curr_func_name, int *num_
     } while (token_list.Act != NULL && token->type == END_OF_LINE);
 
     if (token->type == IF) {
-        static unsigned num_of_ifs;
+        //static unsigned num_of_ifs;
         num_of_ifs++;
         retval = push_stack(&num_of_ifs, &if_stack);
         if (retval) {
@@ -982,7 +1037,9 @@ int statement_rule(Token *token, unsigned depth, char *curr_func_name, int *num_
         if (retval) {
             return retval;
         }
-        fprintf(stdout, "DEFVAR LF@?if_var_%s_%u\n", curr_func_name, num_of_ifs);
+        if (func_call_num == 1) {
+            fprintf(stdout, "DEFVAR LF@?if_var_%s_%u\n", curr_func_name, num_of_ifs);
+        }
         
         tDLList unused_list;
         DLInitList(&unused_list);
@@ -991,18 +1048,20 @@ int statement_rule(Token *token, unsigned depth, char *curr_func_name, int *num_
             return retval;
         }
 
+        if (func_call_num > 1) {
         fprintf(stdout, "POPS LF@?if_var_%s_%u\n", curr_func_name, num_of_ifs);
         fprintf(stdout, "JUMPIFNEQ ?if_%s_%u LF@?if_var_%s_%u bool@true\n", 
                 curr_func_name, num_of_ifs, curr_func_name, num_of_ifs);
+        }
 
         DLDisposeList(&unused_list);
         get_next_token(token);
         if (token->type != CURLY_BR_L) {
             return SYNTAX_ERROR;
         }
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         retval = statement_rule(token, depth, curr_func_name, num_of_returns);
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         if (retval) {
             return retval;
         }
@@ -1025,21 +1084,23 @@ int statement_rule(Token *token, unsigned depth, char *curr_func_name, int *num_
         }
         
         decrease_depth(&depth);
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         retval = statement_rule(token, depth, curr_func_name, num_of_returns);
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         if (retval) {
             return retval;
         }
     }
     else if (token->type == FOR) {
-        static unsigned num_of_fors;
+        //static unsignednum_of_fors;
         num_of_fors++;
         retval = push_stack(&num_of_fors, &for_stack);
         if (retval) {
             return retval;
         }
-        fprintf(stdout, "DEFVAR LF@?for_var_%u\n", num_of_fors);
+        if (func_call_num == 1) {
+            fprintf(stdout, "DEFVAR LF@?for_var_%u\n", num_of_fors);
+        }
 
         retval = increase_depth(&depth);
         if (retval) {
@@ -1051,7 +1112,9 @@ int statement_rule(Token *token, unsigned depth, char *curr_func_name, int *num_
             return retval;
         }
 
-        fprintf(stdout, "LABEL ?for_start_%u\n", num_of_fors);
+        if (func_call_num > 1) {
+            fprintf(stdout, "LABEL ?for_start_%u\n", num_of_fors);
+        }
 
         tDLList unused_list;
         DLInitList(&unused_list);
@@ -1067,19 +1130,22 @@ int statement_rule(Token *token, unsigned depth, char *curr_func_name, int *num_
             return SYNTAX_ERROR;
         }
 
-        fprintf(stdout, "POPS LF@?for_var_%u\n", num_of_fors);
-        fprintf(stdout, "JUMPIFNEQ ?for_end_%u LF@?for_var_%u bool@true\n", num_of_fors, num_of_fors);
-        fprintf(stdout, "JUMP ?for_block_start_%u\n", num_of_fors);
-        fprintf(stdout, "LABEL ?for_block_end_%u\n", num_of_fors);
+        if (func_call_num > 1) {
+            fprintf(stdout, "POPS LF@?for_var_%u\n", num_of_fors);
+            fprintf(stdout, "JUMPIFNEQ ?for_end_%u LF@?for_var_%u bool@true\n", num_of_fors, num_of_fors);
+            fprintf(stdout, "JUMP ?for_block_start_%u\n", num_of_fors);
+            fprintf(stdout, "LABEL ?for_block_end_%u\n", num_of_fors);
+        }
 
         get_next_token(token);
         retval = for_last_rule(token, depth);
         if (retval) {
             return retval;
         }
-
-        fprintf(stdout, "JUMP ?for_start_%u\n", num_of_fors);
-        fprintf(stdout, "LABEL ?for_block_start_%u\n", num_of_fors);
+        if (func_call_num > 1) {
+            fprintf(stdout, "JUMP ?for_start_%u\n", num_of_fors);
+            fprintf(stdout, "LABEL ?for_block_start_%u\n", num_of_fors);
+        }
 
         get_next_token(token);
         if (token->type != CURLY_BR_L) {
@@ -1096,21 +1162,23 @@ int statement_rule(Token *token, unsigned depth, char *curr_func_name, int *num_
             return retval;
         }
         // fprintf(stdout, "BREAK\n");
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         retval = statement_rule(token, depth, curr_func_name, num_of_returns);
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         if (retval) {
-            //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             return retval;
         }
 
         unsigned tmp_for = 0;
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         pop_stack(&tmp_for, &for_stack);
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-        fprintf(stdout, "JUMP ?for_block_end_%u\n", tmp_for);
-        fprintf(stdout, "LABEL ?for_end_%u\n", tmp_for);
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+        if (func_call_num > 1) {
+            fprintf(stdout, "JUMP ?for_block_end_%u\n", tmp_for);
+            fprintf(stdout, "LABEL ?for_end_%u\n", tmp_for);
+        }
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
         get_next_token(token);
        // //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
@@ -1127,7 +1195,7 @@ int statement_rule(Token *token, unsigned depth, char *curr_func_name, int *num_
         }
        // //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         decrease_depth(&depth);
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         decrease_depth(&depth);
        // //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         retval = statement_rule(token, depth, curr_func_name, num_of_returns);
@@ -1151,9 +1219,9 @@ int statement_rule(Token *token, unsigned depth, char *curr_func_name, int *num_
             get_next_token(token);
         } while (token_list.Act != NULL && token->type == END_OF_LINE);
         DLPred(&token_list);
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         retval = statement_rule(token, depth, curr_func_name, num_of_returns);
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         if (retval) {
             return retval;
         }
@@ -1197,9 +1265,9 @@ int statement_rule(Token *token, unsigned depth, char *curr_func_name, int *num_
         }
 
         (*num_of_returns)++;
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         return statement_rule(token, depth, curr_func_name, num_of_returns);
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         if (retval) {
             return retval;
         }
@@ -1209,14 +1277,14 @@ int statement_rule(Token *token, unsigned depth, char *curr_func_name, int *num_
     //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
     if (token_list.Act == token_list.Last) {
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         return 0;
     }
 
     do {  
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         get_next_token(token);
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     
     } while (token_list.Act != NULL && token->type == END_OF_LINE);
     //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
@@ -1228,54 +1296,104 @@ int statement_rule(Token *token, unsigned depth, char *curr_func_name, int *num_
 
 // FUNC_DEF -> func id_func ( PARAM ) RETURN_TYPES eol STATEMENT } eol
 int func_def_rule(Token *token) {
+    fprintf(stderr, "func call num = %u\n", func_call_num);
     unsigned depth = 0;
     int num_of_returns = 0;
+    
     DLInitList(&if_stack);
     DLInitList(&else_stack);
     DLInitList(&for_stack);
-    sym_table_init(&asm_table);
+    num_of_fors = 0;
+    num_of_ifs = 0;
     
+    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
+    if (func_call_num == 1) {
+        sym_table_init(&asm_table);
+        DLPred(&token_list);
+        token_func_start = token_list.Act;
+        DLSucc(&token_list);
+    }
+    else {
+        fprintf(stderr, "else token data %s\n", token_func_start->token.data);
+        token_list.Act = token_func_start;
+        fprintf(stderr, "else token data %s\n", token_list.Act->token.data);
+        fprintf(stderr, "'%s' next '%s' next '%s'\n", token_list.Act->token.data, token_list.Act->rptr->token.data, token_list.Act->rptr->rptr->token.data);
+        get_next_token(token);
+        fprintf(stderr, "after_get_next: '%s' next '%s' next '%s'\n", token_list.Act->token.data, token_list.Act->rptr->token.data, token_list.Act->rptr->rptr->token.data);
+
+    }
+    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
     if (token->type != FUNC) {
+            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
         return SYNTAX_ERROR;
     }
-
+    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+    fprintf(stderr, "%s\n", token->data);
     get_next_token(token);
     if (token->type != ID) {
+        fprintf(stderr, "%s\n", token->data);
+            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
         return SYNTAX_ERROR;
     }
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
+   // fprintf(stderr, "token data %s\n", token_func_start->token.data);
     token->type = ID_FUNC;
     char *curr_func_name = token->data;
-    fprintf(stdout, "\nLABEL $%s\n", curr_func_name);
-    if (strcmp(curr_func_name, "main\0") == 0) {
-        fprintf(stdout, "CREATEFRAME\n");
+    if (func_call_num == 1) {
+        fprintf(stdout, "\nLABEL $%s\n", curr_func_name);
     }
-    fprintf(stdout, "PUSHFRAME\n");
+    if (strcmp(curr_func_name, "main\0") == 0) {
+            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
+        if (func_call_num == 1)  {
+            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+            fprintf(stdout, "CREATEFRAME\n");
+        }
+    }
+    if (func_call_num == 1) {
+        fprintf(stdout, "PUSHFRAME\n");
+    }
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
     int retval = increase_depth(&depth);
     if (retval) {
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         return retval;
     }
- //fprintf(stdout, "DEFVAR LF@_\n");
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
     get_next_token(token);
     if (token->type != ROUND_BR_L) {
-
+fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         return SYNTAX_ERROR;
     }
+    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
     if (param_rule(token, depth)) {
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         return SYNTAX_ERROR;
     }
+    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
     if (return_types_rule(token)) {
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         return SYNTAX_ERROR;
     }
-   // //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
     get_next_token(token);
     if (token->type != END_OF_LINE) {
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         return SYNTAX_ERROR;
     }
-   // //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
+    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     retval = statement_rule(token, depth, curr_func_name, &num_of_returns);
    // //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     if (retval) {
@@ -1284,42 +1402,79 @@ int func_def_rule(Token *token) {
     Sym_table_item *item = sym_table_search_item(&sym_table, curr_func_name, 0);
         if (!item) {
             fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+                fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
             return SEMANTIC_UNDEFINED_VAR_ERROR;
         }
     if (num_of_returns == 0 && item->value.func.num_out_var > 0) {
+            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
         return SEMANTIC_FUNCTION_ERROR;
     }
+
+    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
     decrease_depth(&depth);
     get_next_token(token);
     if (token->type != CURLY_BR_R) {
+            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
         return SYNTAX_ERROR;
     }
 
-    sym_table_clear_all(&asm_table);
+    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
     if (strcmp(curr_func_name, "main\0") != 0) {
-        fprintf(stdout, "POPFRAME\n");
-        fprintf(stdout, "RETURN\n");
+        if (func_call_num > 1) {
+                fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
+            fprintf(stdout, "POPFRAME\n");
+            fprintf(stdout, "RETURN\n");
+        }
     }
     else
     {
-        fprintf(stdout, "JUMP $$$end_of_program\n");
+            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
+        if (func_call_num > 1) {
+            fprintf(stdout, "JUMP $$$end_of_program\n");
+        }
     }
     
-    //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     get_next_token(token);
     //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     if (token->type == END_OF_LINE || token_list.Act == token_list.Last) {
-      //  //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+      //  //fprin       tf(stderr, "%s %d\n", __FILE__, __LINE__);
         DLDisposeList(&if_stack);
         DLDisposeList(&else_stack);
         DLDisposeList(&for_stack);
+            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+            //fprintf(stderr, "func_call_num(fdr)= %u\n", func_call_num);
+        if (func_call_num > 1) {
+                fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
+            sym_table_clear_all(&asm_table);
+            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+            return 0;
+        }
+        else {
+            func_call_num++;
+        //    fprintf(stderr, "name = %s\n", token_func_start->token.data);
+            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
+            return func_def_rule(token);
+            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+            //return 0;
+        }
+        
         return 0;
     }
     DLDisposeList(&if_stack);
     DLDisposeList(&else_stack);
     DLDisposeList(&for_stack);
+
     return SYNTAX_ERROR;
 }
 
@@ -1330,20 +1485,20 @@ int func_def_next_rule(Token *token) {
     if (token_list.Act == token_list.Last || token_list.Act == NULL) {
         return 0;
     }
-
+    func_call_num = 1;
     int retval = func_def_rule(token);
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
     if (retval) {
-            //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
         return retval;
     }
-    //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     do {
         get_next_token(token);
     } while (token_list.Act != NULL && token->type == END_OF_LINE);
-
+    func_call_num = 1;
     retval = func_def_next_rule(token);
     if (retval) {
         return retval;
@@ -1357,16 +1512,17 @@ int functions_rule(Token *token) {
     int retval = func_def_rule(token);
     //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     if (retval) {
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         return retval;
     }
 
     do {
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         get_next_token(token);
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     } while (token_list.Act != NULL && token->type == END_OF_LINE);
     //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+    
     retval = func_def_next_rule(token);
     if (retval) {
         return retval;
@@ -1411,17 +1567,7 @@ int parse() {
         get_next_token(&token);
     } while (token_list.Act != NULL && token.type == END_OF_LINE);
 
-    print_head();
-    //template_inputs();
-    //template_inputi();
-    //template_inputf();
-    //template_print(unsigned i);
-    //template_int2float();
-    //template_float2int();
-    //template_len();
-    //template_substr();
-    //template_ord();
-    //template_chr();        
+    print_head();      
 
     retval =  functions_rule(&token);
     if (retval) {

@@ -52,7 +52,7 @@ void generate_push_by_type(tDLElemPtr s_token, unsigned *depth ) {
     if (((s_token->token.data[0] >= 'a' && s_token->token.data[0] <= 'z') ||
          (s_token->token.data[0] >= 'A' && s_token->token.data[0] <= 'Z'))) {
             // print_sym_table_items(&asm_table);
-        item = sym_table_search_item(&asm_table, s_token->token.data, *depth);
+        item = sym_table_search_item(&sym_table, s_token->token.data, *depth);
         if (item == NULL) {
             return;
         } else {
@@ -155,12 +155,12 @@ unsigned get_prec_table_rule(unsigned sym1, unsigned sym2) {
 
 void print_exp_list(tDLList *L) {
     tDLElemPtr tmp = L->First;
-    printf("---------------\n");
+    fprintf(stderr, "---------------\n");
     while (tmp != NULL) {
-        printf( "type= %-4d   data= %-4s  d_size= %-4d\n", tmp->token.type, tmp->token.data, tmp->token.data_size);
+        fprintf(stderr,  "type= %-4d   data= %-4s  d_size= %-4d\n", tmp->token.type, tmp->token.data, tmp->token.data_size);
         tmp = tmp->rptr;
     }
-    printf("---------------\n");
+    fprintf(stderr, "---------------\n");
 }
 
 void insert_first_by_type(tDLList *L, unsigned type){
@@ -173,6 +173,37 @@ void insert_first_by_type(tDLList *L, unsigned type){
     DLInsertFirst(L, &token);
 }
 
+void pop(tDLList *L){
+    tDLElemPtr element;
+
+    if (L->First == NULL) {
+        return;
+    } else {
+        element = L->First;
+
+        if (L->First == L->Act) {
+            L->Act = NULL;
+        }
+
+        if (L->First == L->Last) {
+            L->First = NULL;
+            L->Last = NULL;
+        } else {
+            L->First = L->First->rptr; 
+            L->First->lptr = NULL;
+        }
+
+        if (element) {
+            if (element->token.type == DOLLAR || element->token.type == SHIFT || element->token.type == E) {
+                if (element->token.data) {
+                    free(element->token.data);
+                }
+                free(element);
+            }
+        }
+    }
+} 
+
 void insert_E(tDLList *L){    
     Token token;
     token.type = E;
@@ -180,14 +211,14 @@ void insert_E(tDLList *L){
     token.data = malloc(sizeof(char) * L->First->token.data_size);
     strcpy(token.data, L->First->token.data);
 
-    DLDeleteFirst (L);
-    DLDeleteFirst (L);
+    pop(L);
+    pop(L);
     DLInsertFirst(L, &token);
 }
 
 void exp_list_dtor(tDLList *EList, tDLList *stack) {
-    DLDisposeList(EList);
-    DLDisposeList(stack);
+    // DLDisposeList(EList);
+    // DLDisposeList(stack);
 }
 
 int div_by_zero_check(tDLElemPtr elem) {
@@ -208,6 +239,7 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *token_list, tDLList *types_list,
     Sym_table_item *item;
 
     while (token_list->Act != NULL) {
+        // fprintf(stderr, "prev= '%s' in_token= '%s' next= '%s'\n",token_list->Act->lptr->token.data, token_list->Act->token.data, token_list->Act->rptr->token.data);
         if (token_list->Act->token.type == END_OF_LINE ||
             token_list->Act->token.type == CURLY_BR_L  ||
             token_list->Act->token.type == SEMICOLON   ||
@@ -223,7 +255,8 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *token_list, tDLList *types_list,
             case ID:
                 item = sym_table_search_item(&sym_table, token_list->Act->token.data, depth);
                 if (item == NULL) {
-                    fprintf(stderr, "SEMANTIC_UNDEF_EXP\n");
+                    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+                    // fprintf(stderr, "SEMANTIC_UNDEF_EXP for=%s\n", token_list->Act->token.data);
                     err = SEMANTIC_UNDEFINED_VAR_ERROR;
                     break;
                 } else {
@@ -310,9 +343,6 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *token_list, tDLList *types_list,
     return err;
 }
 
-void pop(tDLList *L){
-    DLDeleteFirst (L);
-} 
 
 tDLElemPtr get_non_term(tDLList *L){
     tDLElemPtr non_term = L->First;
@@ -340,12 +370,14 @@ int count_active_non_terms(tDLList *L){
    return count;
 }
 
-int reduce(tDLList *stack, int *stack_size, unsigned* depth) {
+int reduce(tDLList *stack, int *stack_size, unsigned* depth, unsigned* func_call_num) {
     tDLElemPtr s_token = get_non_term(stack);
     switch(s_token->token.type) {
         case I:       // EXPR -> i
             if (s_token->rptr->token.type == SHIFT && *stack_size >= 3) {
-                generate_push_by_type(s_token, depth);
+                if (*func_call_num > 1) {
+                    generate_push_by_type(s_token, depth);
+                }
                 insert_E(stack);
                 *stack_size-=1;
             } else {
@@ -356,7 +388,9 @@ int reduce(tDLList *stack, int *stack_size, unsigned* depth) {
             if (count_active_non_terms(stack) == 3) {
                 if (s_token->lptr->token.type == E && s_token->rptr->token.type == E) {
                     *stack_size-=3;
-                    arithm_template(s_token);
+                    if (*func_call_num > 1) {
+                        arithm_template(s_token);
+                    }
                     pop(stack);
                     pop(stack);
                     pop(stack);
@@ -367,14 +401,17 @@ int reduce(tDLList *stack, int *stack_size, unsigned* depth) {
                 }
             } else if (count_active_non_terms(stack) == 2 && s_token->lptr != NULL) {
                 if (s_token->lptr->token.type == E && s_token->rptr->token.type == SHIFT) {
-                    if (exp_type == INTEGER) {
-                        fprintf(stdout, "PUSHS int@%d\n", 0);
-                    } else if (exp_type == FLOAT) {
-                        fprintf(stdout, "PUSHS float@%a\n", 0.0);
-                        fprintf(stderr, "float@ (%f)\n", 0.0);
+                    if (*func_call_num > 1) {
+                        fprintf(stdout, "POPS GF@&div_zero_number\n");
+                        if (exp_type == INTEGER) {
+                            fprintf(stdout, "PUSHS int@%d\n", 0);
+                        } else if (exp_type == FLOAT) {
+                            fprintf(stdout, "PUSHS float@%a\n", 0.0);
+                            fprintf(stderr, "float@ (%f)\n", 0.0);
+                        }
+                        generate_push_by_type(s_token->lptr, depth);
+                        fprintf(stdout, "SUBS\n");
                     }
-                    generate_push_by_type(s_token->lptr, depth);
-                    fprintf(stdout, "SUBS\n");
                     pop(stack);
                     pop(stack);
                     pop(stack);
@@ -393,7 +430,9 @@ int reduce(tDLList *stack, int *stack_size, unsigned* depth) {
             if (count_active_non_terms(stack) == 3) { // create tmp, 
                 if (s_token->lptr->token.type == E && s_token->rptr->token.type == E) {
                     *stack_size-=3;
-                    arithm_template(s_token);
+                    if (*func_call_num > 1) {
+                        arithm_template(s_token);
+                    }
                     pop(stack);
                     pop(stack);
                     pop(stack);
@@ -414,7 +453,9 @@ int reduce(tDLList *stack, int *stack_size, unsigned* depth) {
         case NOT_EQ:  // EXPR -> EXPR != EXPR
             if (count_active_non_terms(stack) == 3 && (ops - done_ops == 1)) {
                 if (s_token->lptr->token.type == E && s_token->rptr->token.type == E) {
-                    logic_template(s_token);
+                    if (*func_call_num > 1) {
+                        logic_template(s_token);
+                    }
                     *stack_size-=3;
                     pop(stack);
                     pop(stack);
@@ -451,10 +492,11 @@ int reduce(tDLList *stack, int *stack_size, unsigned* depth) {
     return 0; 
 }
 
-int expression(tDLList *types_list, unsigned exp_t, unsigned depth) {
+int expression(tDLList *types_list, unsigned exp_t, unsigned depth, unsigned func_call_num) {
+    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     ops = 0;
     done_ops = 0;
-    // printf("~~~~~~~~~~~~~~~~~search~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+    // fprintf(stderr, "~~~~~~~~~~~~~~~~~search~~~~~~~~~~~~~~~~~~~~~~~~~\n");
     tDLList stack;
     DLInitList(&stack);
     tDLList L;
@@ -469,8 +511,7 @@ int expression(tDLList *types_list, unsigned exp_t, unsigned depth) {
     L.Act = L.First;
 
     insert_first_by_type(&stack, DOLLAR);
-    // fprintf(stdout, "DEFVAR LF@&trash_bin\n");
-    // printf("PrintExpList!!1!\n");
+    // fprintf(stderr, "PrintExpList!!1!\n");
     // print_exp_list(&L);
 
     tDLElemPtr s_token = get_non_term(&stack);
@@ -499,7 +540,7 @@ int expression(tDLList *types_list, unsigned exp_t, unsigned depth) {
                 stack_size+=2;
                 break;
             case REDUCE:
-                retval = reduce(&stack, &stack_size, &depth);
+                retval = reduce(&stack, &stack_size, &depth, &func_call_num);
                 if (retval) {
                     exp_list_dtor(&stack, &L);
                     return retval;
@@ -517,7 +558,9 @@ int expression(tDLList *types_list, unsigned exp_t, unsigned depth) {
         
         s_token = get_non_term(&stack);
     } while ((s_token->token.type != DOLLAR) || (L.Act->token.type != DOLLAR));
-    // printf("%s %d\n", __FILE__, __LINE__);
+    // print_exp_list(&token_list);
+
+    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     exp_type = 0;
     exp_list_dtor(&stack, &L);
 

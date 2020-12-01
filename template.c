@@ -2,7 +2,7 @@
 #include "token_dll.h"
 #include "template.h"
 
-void template_print(unsigned i);
+void template_print(unsigned i, unsigned func_call_num);
 
 
 void template_str_concat() {
@@ -122,9 +122,10 @@ void template_inputb() {
     fprintf(stdout, "JUMP !inpb\n");
 }
 
-void template_print(unsigned i) {
+void template_print(unsigned i, unsigned func_call_num) {
     //fprintf(stdout, "LABEL $print\n");
     //int n = i-1;
+    if (func_call_num > 1) {
     fprintf(stdout, "PUSHFRAME\n");
     for (unsigned t = 1; t < i; t++) {
         fprintf(stdout, "DEFVAR LF@%%retval%u\n", t);
@@ -134,6 +135,7 @@ void template_print(unsigned i) {
        fprintf(stdout, "WRITE LF@%%retval%u\n", n);
     }
     fprintf(stdout, "POPFRAME\n");
+    }
     //fprintf(stdout, "RETURN\n");
     
     
@@ -186,7 +188,7 @@ void template_substr() {        // [y a h o r]
     fprintf(stdout, "MOVE LF@%%retval%u LF@%%op%u\n", 2, 2);    // LF@%%retval2 = i
     fprintf(stdout, "DEFVAR LF@%%retval%u\n", 3);
     fprintf(stdout, "MOVE LF@%%retval%u LF@%%op%u\n", 3, 3);    // LF@%%retval3 = n
-    fprintf(stdout, "BREAK\n");
+    //printf(stdout, "BREAK\n");
     fprintf(stdout, "DEFVAR LF@!bool_if\n");    // for control bool bool
     fprintf(stdout, "DEFVAR LF@!ret_int\n");    // int returns 0/1
     fprintf(stdout, "DEFVAR LF@!new_string%u\n", 1);    // string for back
@@ -199,16 +201,16 @@ void template_substr() {        // [y a h o r]
     fprintf(stdout, "LT LF@!bool_if LF@%%retval%u int@0\n", 3);     // if (n < 0)
     fprintf(stdout, "JUMPIFEQ !substr_chyba1 LF@!bool_if bool@true\n");    // if (i > len(string))
     fprintf(stdout, "DEFVAR LF@!new_strlen\n"); // for control n > len(s) - i
-    fprintf(stdout, "BREAK\n");
+    //printf(stdout, "BREAK\n");
     fprintf(stdout, "MOVE LF@!new_strlen LF@!strlen\n");
-    fprintf(stdout, "BREAK\n");
+    //printf(stdout, "BREAK\n");
     fprintf(stdout, "SUB LF@!new_strlen LF@!new_strlen LF@%%retval%u\n", 2);    // len(s) - i
-    fprintf(stdout, "BREAK\n");
+    //printf(stdout, "BREAK\n");
     fprintf(stdout, "GT LF@!bool_if LF@%%retval%u LF@!new_strlen\n", 3);    // if n > len(s) - i
     fprintf(stdout, "JUMPIFEQ !substr_chyba2 LF@!bool_if bool@true\n");
 
     fprintf(stdout, "LABEL !substr_cont\n"); 
-    fprintf(stdout, "BREAK\n");
+    //printf(stdout, "BREAK\n");
 
     fprintf(stdout, "EQ LF@!bool_if LF@%%retval%u int@0\n", 3); // if (n == 0) => return ""
     fprintf(stdout, "JUMPIFEQ !substr_chyba0 LF@!bool_if bool@true\n");
@@ -225,7 +227,7 @@ void template_substr() {        // [y a h o r]
     fprintf(stdout, "ADD LF@!new_i LF@!new_i int@1\n");    // i++
     fprintf(stdout, "ADD LF@%%retval%u LF@%%retval%u int@1\n", 2, 2);
     fprintf(stdout, "GETCHAR LF@!new_string%u LF@%%retval%u LF@%%retval%u\n", 2, 1, 2);
-    fprintf(stdout, "BREAK\n");
+    //printf(stdout, "BREAK\n");
     fprintf(stdout, "CONCAT LF@!new_string%u LF@!new_string%u LF@!new_string%u\n", 1, 1, 2);
     fprintf(stdout, "JUMP !substr_cuklus\n");  
 
@@ -247,7 +249,7 @@ void template_substr() {        // [y a h o r]
     */
 
     fprintf(stdout, "LABEL !substr_chyba2\n");
-    fprintf(stdout, "BREAK\n");
+    //printf(stdout, "BREAK\n");
     fprintf(stdout, "MOVE LF@%%retval%u LF@!new_strlen\n", 3);
     fprintf(stdout, "JUMP !substr_cont\n");
 

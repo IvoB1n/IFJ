@@ -2,7 +2,7 @@ void print_head();
 void template_inputs();
 void template_inputi();
 void template_inputf();
-void template_print(unsigned i);
+void template_print(unsigned i, unsigned func_call_num);
 void template_int2float();
 void template_float2int();
 void template_len();
