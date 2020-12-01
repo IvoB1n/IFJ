@@ -73,7 +73,6 @@ test() {
             echo "                         /"
             echo "                        /"
         elif [ "$less_flag" = "-go" ]; then
-            echo "$1"
             rm gen.code
             ./compiler < "$1" >gen.code #2>/dev/null
             ret_valcom=$?
@@ -87,6 +86,7 @@ test() {
             echo "return value comp:   $ret_valcom "
             echo "expected: $line "
             echo "return value inter:  $ret_valint "
+            echo "$1"
 
         else 
             echo "$1"

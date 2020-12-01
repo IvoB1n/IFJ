@@ -1,4 +1,5 @@
-// potom
+// out: 0 1 4 9 16
+
 package main
 
 func main () {
