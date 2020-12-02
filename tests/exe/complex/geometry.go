@@ -8,7 +8,11 @@
 package main
 
 func PrintResult(o float64, s float64) {
+	a:=float2int(o)
+	b:=float2int(s)
 	print("o = ", o, "\ns = ", s, "\n")
+	print("o int = ", a, "\ns int = ", b, "\n")
+
 }
 
 func ProcessSquare()(int) {
