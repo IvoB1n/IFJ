@@ -216,10 +216,10 @@ void insert_E(tDLList *L){
     DLInsertFirst(L, &token);
 }
 
-void exp_list_dtor(tDLList *EList, tDLList *stack) {
-    // DLDisposeList(EList);
-    // DLDisposeList(stack);
-}
+// void exp_list_dtor(tDLList *EList, tDLList *stack) {
+//     // DLDisposeList(EList);
+//     // DLDisposeList(stack);
+// }
 
 int div_by_zero_check(tDLElemPtr elem) {
     char* intz = "0\0";
@@ -255,7 +255,7 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *token_list, tDLList *types_list,
             case ID:
                 item = sym_table_search_item(&sym_table, token_list->Act->token.data, depth);
                 if (item == NULL) {
-                    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+                    // fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                     // fprintf(stderr, "SEMANTIC_UNDEF_EXP for=%s\n", token_list->Act->token.data);
                     err = SEMANTIC_UNDEFINED_VAR_ERROR;
                     break;
@@ -493,7 +493,7 @@ int reduce(tDLList *stack, int *stack_size, unsigned* depth, unsigned* func_call
 }
 
 int expression(tDLList *types_list, unsigned exp_t, unsigned depth, unsigned func_call_num) {
-    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+    // fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     ops = 0;
     done_ops = 0;
     // fprintf(stderr, "~~~~~~~~~~~~~~~~~search~~~~~~~~~~~~~~~~~~~~~~~~~\n");
@@ -504,7 +504,7 @@ int expression(tDLList *types_list, unsigned exp_t, unsigned depth, unsigned fun
     unsigned err = exp_list_ctor(&L, &token_list, types_list, &exp_t, depth);
     if (err) {
         fprintf(stderr, "ERROR IN LIST CTOR\n");
-        exp_list_dtor(&stack, &L);
+        // exp_list_dtor(&stack, &L);
         return err;
     }
 
@@ -542,15 +542,15 @@ int expression(tDLList *types_list, unsigned exp_t, unsigned depth, unsigned fun
             case REDUCE:
                 retval = reduce(&stack, &stack_size, &depth, &func_call_num);
                 if (retval) {
-                    exp_list_dtor(&stack, &L);
+                    // exp_list_dtor(&stack, &L);
                     return retval;
                 }
                 break;
             case NONE:
-                exp_list_dtor(&stack, &L);
+                // exp_list_dtor(&stack, &L);
                 return SYNTAX_ERROR;
             default:
-                exp_list_dtor(&stack, &L);
+                // exp_list_dtor(&stack, &L);
                 return SYNTAX_ERROR;
         };
         // printf("---stack items---\n");
@@ -560,9 +560,9 @@ int expression(tDLList *types_list, unsigned exp_t, unsigned depth, unsigned fun
     } while ((s_token->token.type != DOLLAR) || (L.Act->token.type != DOLLAR));
     // print_exp_list(&token_list);
 
-    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+    // fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     exp_type = 0;
-    exp_list_dtor(&stack, &L);
+    // exp_list_dtor(&stack, &L);
 
     return 0; 
 }

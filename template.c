@@ -238,15 +238,6 @@ void template_substr() {        // [y a h o r]
     fprintf(stdout, "PUSHS LF@!ret_int\n");
     fprintf(stdout, "POPFRAME\n");
     fprintf(stdout, "RETURN\n");
-    /*
-    [ y 'a h o' r]
-    getchar -> LF@!new_string1
-    while (i != n){
-        i++
-        getchar -> LF@!new_string2
-        LF@!new_string1 = LF@!new_string1 + LF@!new_string2
-    }
-    */
 
     fprintf(stdout, "LABEL !substr_chyba2\n");
     //printf(stdout, "BREAK\n");
@@ -335,6 +326,7 @@ void template_chr() {
 
     fprintf(stdout, "LABEL !chr_chyba\n");
     fprintf(stdout, "MOVE LF@!error int@1\n");
+    fprintf(stdout, "MOVE LF@!ascii_symbol string@58\n");
     fprintf(stdout, "PUSHS LF@!ascii_symbol\n");
     fprintf(stdout, "PUSHS LF@!error\n");
     fprintf(stdout, "POPFRAME\n");
