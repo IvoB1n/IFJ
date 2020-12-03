@@ -1,8 +1,8 @@
 //
 package main
 
-func main() {
+func main () {
 	a := 5
-	for ; a == 0; a = 3 {
+	for ;a==0;a=3 {
 	}
 }

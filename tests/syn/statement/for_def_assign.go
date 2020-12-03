@@ -1,7 +1,7 @@
 //
 package main
 
-func main() {
-	for a := 0; a == 0; a = 2 {
+func main () {
+	for a:=0;a==0;a=2 {
 	}
 }

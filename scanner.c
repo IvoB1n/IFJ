@@ -9,7 +9,7 @@
 #define EOL '\n'
 
 void print_scan_token (Token *token) {
-    printf( "%d, %s, %d\n", token->type, token->data, token->data_size);
+    fprintf(stderr, "%d, %s, %d\n", token->type, token->data, token->data_size);
 }
 
 
@@ -118,7 +118,7 @@ int control_exp(Token *token, char *c) {
                     return 0;
                 }
             } else {
-                free(token->data);
+                //free(token->data);
                 return LEXICAL_ERROR;
             }
         }
@@ -142,7 +142,8 @@ int control_exp(Token *token, char *c) {
             return 0;
         }
     } else {
-        free(token->data);
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+        //free(token->data);
         return LEXICAL_ERROR;
     }
 }
@@ -163,7 +164,11 @@ int control_float(Token *token, char *c) {
                 *c = getchar();
             }
         }
-    } 
+    } else {
+        //free(token->data);
+        return LEXICAL_ERROR;
+    }
+
     if (*c == 'E' || *c == 'e') {
         if (expand_token(*c, token)) {
             free(token->data);
@@ -172,11 +177,11 @@ int control_float(Token *token, char *c) {
         *c = getchar();
         switch(control_exp(token, c)) {
             case LEXICAL_ERROR: {
-                free(token->data);
+                //free(token->data);
                 return LEXICAL_ERROR;
             }
             case INTERNAL_ERROR: {
-                free(token->data);
+                //free(token->data);
                 return INTERNAL_ERROR;
             }
             default: return 0;
@@ -333,17 +338,6 @@ int scan_token(Token *token) {
                 c = getchar();
             }
 
-        // token %
-        } else if (c == '%') {
-            token->type = MOD;
-            if (init_token(c, token)) {
-                free(token->data);
-                return INTERNAL_ERROR;
-            } else {
-                parser_function(token);
-                c = getchar();
-            }
-
         // token ,
         } else if (c == ',') {
             token->type = COMMA;
@@ -365,7 +359,7 @@ int scan_token(Token *token) {
                 parser_function(token);
                 c = getchar();
             }
-
+        /*
         // token &&
         } else if (c == '&') {
             if (init_token(c, token)) {
@@ -407,8 +401,8 @@ int scan_token(Token *token) {
                 free(token->data);
                 return LEXICAL_ERROR;
             }
-
-        // token !
+        */
+        // token !      // send ! in boolean
         } else if (c == '!') {
             token->type = NOT;
             if (init_token(c, token)) {
@@ -463,11 +457,10 @@ int scan_token(Token *token) {
                 return INTERNAL_ERROR;
             }
             c = getchar();
-
             // string comment
             if (c == '/') {
                 c = getchar();
-                while (c != EOL) {
+                while (c != EOL && c != EOF) {
                     c = getchar();
                 }
                 free(token->data);
@@ -496,12 +489,12 @@ int scan_token(Token *token) {
                     }
                 }
                 free(token->data);
+                //free_token(token);
                 c = getchar();
             } else {
                 parser_function(token);
             }
-
-
+            
         // token ID        
         } else if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c == '_')) {
             token->type = ID;

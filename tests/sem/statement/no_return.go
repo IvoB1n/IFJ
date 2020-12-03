@@ -1,4 +1,5 @@
-//compiler 0 6 (interpret 6)
+//compiler 0 6
+//interpret 6
 //
 package main
 

@@ -1,7 +1,7 @@
 //
 package main
 
-func alpha(a float64, b int, c string, d int, e string)(int,int){
+func alpha(a float64, b int)(int,int){
 	return 24 , 69
 }
 

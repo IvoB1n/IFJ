@@ -1,9 +1,9 @@
-//compiler 7 или 6 мб?
+//compiler 7
 //
 package main
 
 func alpha (a int) (int) {
-	return 6.7
+	return 6
 }
 
 func main () {

@@ -1,4 +1,4 @@
-//
+// output: 55
 package main
 
 func alpha(a int) (int) {
