@@ -100,7 +100,7 @@ void decrease_depth(unsigned *depth) {
 }
 
 int statement_rule(Token *token, unsigned depth, char *curr_func_name, int *num_of_returns);
-int assignment_rule(Token *token, unsigned depth);
+int assignment_rule(Token *token, unsigned depth, unsigned scope);
 int func_call(Token *token, tDLList *list, unsigned depth);
 int id_next_rule(Token *token, tDLList *assign_list, unsigned depth);
 
@@ -549,7 +549,7 @@ int for_first_rule(Token *token, unsigned depth) {
         return 0;
     }
 
-    int retval = assignment_rule(token, depth);
+    int retval = assignment_rule(token, depth, FOR);
     if (retval) {
         return retval;
     }
@@ -878,7 +878,7 @@ int insert_new_vars(tDLList *left_list, tDLList *right_list, unsigned depth) {
 /*  ASSIGNMENT -> ( EXPR EXPR_NEXT )                  --- FUNC_CALL
     ASSIGNMENT -> ID_NEXT ASSIGN_SYM EXPR EXPR_NEXT    --- DECLARATION, ASSIGNMENT
 */
-int assignment_rule(Token *token, unsigned depth) {
+int assignment_rule(Token *token, unsigned depth, unsigned scope) {
     int retval = 0;
     unsigned equal;
 
@@ -921,8 +921,16 @@ int assignment_rule(Token *token, unsigned depth) {
                 return SYNTAX_ERROR;
         }
 
+        if (scope == FOR && equal != DECLARE) {
+            DLDisposeList(&assign_left_list);
+            DLDisposeList(&assign_right_list);
+            return SYNTAX_ERROR;
+        }
+
         retval = expression_rule(token, &assign_right_list, depth, NONE);
         if (retval) {
+            DLDisposeList(&assign_left_list);
+            DLDisposeList(&assign_right_list);
             return retval;
         }
        
@@ -1146,7 +1154,7 @@ int statement_rule(Token *token, unsigned depth, char *curr_func_name, int *num_
         }
     }
     else if (token->type == ID) {
-        retval = assignment_rule(token, depth);
+        retval = assignment_rule(token, depth, ID);
         if (retval) {
             return retval;
         }
@@ -1353,9 +1361,6 @@ int func_def_rule(Token *token) {
     }    
     Sym_table_item *item = sym_table_search_item(&sym_table, curr_func_name, 0);
         if (!item) {
-            // //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-                // //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-
             return SEMANTIC_UNDEFINED_VAR_ERROR;
         }
     if (num_of_returns == 0 && item->value.func.num_out_var > 0) {

@@ -232,7 +232,7 @@ void template_substr() {        // [y a h o r]
     fprintf(stdout, "JUMP !substr_cuklus\n");  
 
     fprintf(stdout, "LABEL !substr_chyba1\n");
-    fprintf(stdout, "MOVE LF@!new_string%u string@\\000\n", 1);
+    fprintf(stdout, "MOVE LF@!new_string%u string@\n", 1);
     fprintf(stdout, "MOVE LF@!ret_int int@1\n");
     fprintf(stdout, "PUSHS LF@!new_string%u\n", 1);
     fprintf(stdout, "PUSHS LF@!ret_int\n");
@@ -246,7 +246,7 @@ void template_substr() {        // [y a h o r]
 
     fprintf(stdout, "LABEL !substr_chyba0\n");
     fprintf(stdout, "MOVE LF@!ret_int int@0\n");
-    fprintf(stdout, "MOVE LF@!new_string%u string@\\000\n", 1);
+    fprintf(stdout, "MOVE LF@!new_string%u string@\n", 1);
     fprintf(stdout, "PUSHS LF@!new_string%u\n", 1);
     fprintf(stdout, "PUSHS LF@!ret_int\n");
     fprintf(stdout, "POPFRAME\n");
@@ -326,7 +326,7 @@ void template_chr() {
 
     fprintf(stdout, "LABEL !chr_chyba\n");
     fprintf(stdout, "MOVE LF@!error int@1\n");
-    fprintf(stdout, "MOVE LF@!ascii_symbol string@58\n");
+    fprintf(stdout, "MOVE LF@!ascii_symbol string@\n");
     fprintf(stdout, "PUSHS LF@!ascii_symbol\n");
     fprintf(stdout, "PUSHS LF@!error\n");
     fprintf(stdout, "POPFRAME\n");
