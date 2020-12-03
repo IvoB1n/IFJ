@@ -18,24 +18,55 @@ void DLInitList (tDLList *L) {
 
 void DLDisposeList (tDLList *L) {
     tDLElemPtr element;
-    if (!L->First) {
+    //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+    if (L->First) {
+        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         while (L->First != NULL) {
             element = L->First;
             L->First = element->rptr;
-        //  fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+          //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
             if (element) {
-            //    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+                //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
-                if (element->token.data) {
+                if (element->token.data != NULL) {
+                    //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                     free(element->token.data);
                 }
+                free(element);
             }
-        //   fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-
-            free(element);
+           //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         }
     }
+    // tDLElemPtr element;
+    // // L->Act = L->First;
+    // while (L->First != NULL)
+    // {
+    //     element = L->First;
+
+    //     if (L->First == L->Act) {
+    //         L->Act = NULL;
+    //     }
+
+    //     if (L->First == L->Last) {
+    //         L->First = NULL;
+    //         L->Last = NULL;
+    //     } else {
+    //         L->First = L->First->rptr; 
+    //         L->First->lptr = NULL;
+    //     }
+
+    //     if (element) {
+    //             if (element->token.data) {
+    //                 // free(element->token.data);
+    //             }
+    //             free(element);
+    //     }
+        // element = L->Last;
+        // L->Last = element->lptr;
+        // DLDeleteLast(L);
+    // }
+    
 
     L->Last = NULL;
     L->Act = NULL;
@@ -135,8 +166,8 @@ void DLDeleteFirst (tDLList *L) {
             if (element->token.data) {
                 free(element->token.data);
             }
+            free(element);
         }
-        free(element);
     }
 }	
 
@@ -164,8 +195,9 @@ void DLDeleteLast (tDLList *L) {
             if (element->token.data) {
                 free(element->token.data);
             }
+            free(element);
         }
-        free(element);
+        
     }
 }
 

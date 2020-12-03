@@ -127,21 +127,14 @@ void sym_table_delete_on_depth(Sym_table *table, unsigned depth) {
                 while (item_for_delete != NULL) {
                     next_item = item_for_delete->nextPtr;
                     
-                    //fprintf(stderr, "item ptr1: %p\n", item_for_delete);
                     if (item_for_delete->depth == depth) {
-                    //    //fprintf(stderr, "depth to del = %u\n", depth);
                         if (item_for_delete->name) {
-                          //  ////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-                            //fprintf(stderr, "delete_item %s index - %d\n", item_for_delete->name, i);
-                            ////fprintf(stderr, "item for delete -- %s\n", item_for_delete->name);
                             free(item_for_delete->name);
                         }
                         if (item_for_delete->value.func.num_in_var > 0) {
-                            ////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                             free(item_for_delete->value.func.in_var_list);
                         }
                         if (item_for_delete->value.func.num_out_var > 0) {
-                            ////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                             free(item_for_delete->value.func.out_var_list);
                         }
                         free(item_for_delete);
@@ -175,9 +168,6 @@ void sym_table_delete_on_depth(Sym_table *table, unsigned depth) {
                     }
                     if (depth == 0) {
                         if (item_for_delete->value.func.num_in_var > 0) {
-                            //////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-                            ////fprintf(stderr, "%d\n", item_for_delete->value.func.num_in_var);
-                            //////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                             free(item_for_delete->value.func.in_var_list);
                             //////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                         }
@@ -218,11 +208,18 @@ void sym_table_delete_item(Sym_table *table, char* name, unsigned depth) {
         //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
         if ((strcmp(name, item_for_delete->name) == 0) && (depth == item_for_delete->depth)) {
-            free(item_for_delete->name);
-            free(item_for_delete->value.func.in_var_list);
-            free(item_for_delete->value.func.out_var_list);
-            free(item_for_delete);
-        //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+            if (item_for_delete) {
+                if (item_for_delete->name) {
+                    free(item_for_delete->name);
+                }
+                if (item_for_delete->value.func.num_in_var > 0) {
+                    free(item_for_delete->value.func.in_var_list);
+                }
+                if (item_for_delete->value.func.num_out_var > 0) {
+                    free(item_for_delete->value.func.out_var_list);
+                }
+                free(item_for_delete);
+            }
 
             if (previous_item == NULL) {
                 (*table)[index + depth * INDEX_SIZE] = next_item;

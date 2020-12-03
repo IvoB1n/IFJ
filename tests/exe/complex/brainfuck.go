@@ -7,13 +7,13 @@ package main
 func Instruction(instr string, pc int, ptr int, memory string, program string, progLen int) (int,int,int,string) {
 	err := 0
 
-	print("instr = ", instr, "  pc= ", pc, "  ptr= ", ptr, "  memory= ", memory, "\n") //"  program= ", program, "  progLen= ", progLen, "\n")
+	// print("instr = ", instr, "  pc= ", pc, "  ptr= ", ptr, "  memory= ", memory, "\n") //"  program= ", program, "  progLen= ", progLen, "\n")
 
 	
 
 	if instr == "+" {
 		memory,err = Change(1, memory, ptr)
-		print("memory = ", memory, "\n" )
+		// print("memory = ", memory, "\n" )
 		return err , pc , ptr , memory
 	} else {
 	}
@@ -74,7 +74,7 @@ func Move (right int, ptr int) (int) {
 }
 
 func Change (increment int, memory string, ptr int) (string, int) {
-	print("\n0 -  memory= ", memory, "   ptr= ", ptr, "\n")
+	// print("\n0 -  memory= ", memory, "   ptr= ", ptr, "\n")
 
 	first := ""
 	first , _ = substr(memory, 0, ptr)
@@ -83,23 +83,23 @@ func Change (increment int, memory string, ptr int) (string, int) {
 	lastBegin := ptr + 1
 	lastLen := 0
 	lastLen = len(memory)
-	print("lastLen = ", lastLen, "\n")
+	// print("lastLen = ", lastLen, "\n")
 	//print("2 -  memory= ", memory, "   ptr= ", ptr, "\n")
 
 	lastLen = lastLen - ptr + 1
-	print("mem = ", memory, "lastbegin = ", lastBegin, "lastLen = ", lastLen, "\n")
+	// print("mem = ", memory, "lastbegin = ", lastBegin, "lastLen = ", lastLen, "\n")
 	last := ""
 	last,_ = substr(memory, lastBegin, lastLen)
 	//print("3 -  memory= ", memory, "   ptr= ", ptr, "\n")
 	char := 0
 	char,_ = ord(memory, ptr)
-	print("char= ", char, "  memory= ", memory, "   ptr= ", ptr, "\n")
+	// print("char= ", char, "  memory= ", memory, "   ptr= ", ptr, "\n")
 	if increment==1 {
 		char = char + 1
 	} else {
 		char = char - 1
 	}
-	print("char= ", char, "  memory= ", memory, "   ptr= ", ptr, "\n")
+	// print("char= ", char, "  memory= ", memory, "   ptr= ", ptr, "\n")
 	err := 0
 	result := ""
 	result,err = chr(char)
@@ -215,15 +215,15 @@ func LoadProgram () (string,int) {
 	err := 0
 	program := ""
 	progLen := 0
-
-	program,err = inputs()
-	print("load_program= ", program, "  err= ", err, "\n")
+	program = "++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++."
+	// program,err = inputs()
+	// print("load_program= ", program, "  err= ", err, "\n")
 	if err == 1 {
 		print("Error loading program\n")
 		return "", 0
 	} else {
 		progLen = len(program)
-		print("proglen = ", progLen, "\n")
+		// print("proglen = ", progLen, "\n")
 		return program, progLen
 	}
 }
@@ -236,7 +236,7 @@ func InitMemory () (string) {
 		memory = memory + char
 	}
 	s_len:= len(memory)
-	print("s_len= ", s_len, "\n")
+	// print("s_len= ", s_len, "\n")
 	return memory
 }
 
@@ -288,7 +288,7 @@ func main () {
 			instr := ""
 			result := 0
 			instr,_ = substr(program, pc, 1)
-			print("instr= ", instr, "\n")
+			// print("instr= ", instr, "\n")
 			result,pc,ptr,memory = Instruction(instr,pc,ptr,memory,program,progLen)
 			//print("result = ", result, "  pc= ", pc, "  ptr= ", ptr, "  memory= ", memory, "\n")
 			if (result == 1) {

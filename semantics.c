@@ -31,6 +31,7 @@ int insert_embedded_functions() {
     strcpy(item->name, "inputs\0");
 
     item->depth = 0;
+    item->nextPtr = NULL;
     
     item->value.func.num_in_var = 0;
     item->value.func.in_var_list = NULL;
@@ -69,6 +70,7 @@ int insert_embedded_functions() {
     strcpy(item2->name, "inputi\0");
 
     item2->depth = 0;
+    item2->nextPtr = NULL;
     
     item2->value.func.num_in_var = 0;
     item2->value.func.in_var_list = NULL;
@@ -107,7 +109,7 @@ int insert_embedded_functions() {
     strcpy(item3->name, "inputf\0");
 
     item3->depth = 0;
-    
+    item3->nextPtr = NULL;
     item3->value.func.num_in_var = 0;
     item3->value.func.in_var_list = NULL;
 
@@ -145,7 +147,7 @@ int insert_embedded_functions() {
     strcpy(item4->name, "print\0");
 
     item4->depth = 0;
-    
+    item4->nextPtr = NULL;
     item4->value.func.num_in_var = 0;
     item4->value.func.in_var_list = NULL;
 
@@ -173,7 +175,7 @@ int insert_embedded_functions() {
     strcpy(item5->name, "int2float\0");
 
     item5->depth = 0;
-    
+    item5->nextPtr = NULL;
     item5->value.func.num_in_var = 1;
     item5->value.func.in_var_list = malloc(sizeof(unsigned) * item5->value.func.num_in_var);
 
@@ -218,7 +220,7 @@ int insert_embedded_functions() {
     strcpy(item6->name, "float2int\0");
 
     item6->depth = 0;
-    
+    item6->nextPtr = NULL;
     item6->value.func.num_in_var = 1;
     item6->value.func.in_var_list = malloc(sizeof(unsigned) * item6->value.func.num_in_var);
 
@@ -263,7 +265,7 @@ int insert_embedded_functions() {
     strcpy(item7->name, "len\0");
 
     item7->depth = 0;
-    
+    item7->nextPtr = NULL;
     item7->value.func.num_in_var = 1;
     item7->value.func.in_var_list = malloc(sizeof(unsigned) * item7->value.func.num_in_var);
 
@@ -308,7 +310,7 @@ int insert_embedded_functions() {
     strcpy(item8->name, "substr\0");
 
     item8->depth = 0;
-    
+    item8->nextPtr = NULL;
     item8->value.func.num_in_var = 3;
     item8->value.func.in_var_list = malloc(sizeof(unsigned) * item8->value.func.num_in_var);
 
@@ -356,7 +358,7 @@ int insert_embedded_functions() {
     strcpy(item9->name, "ord\0");
 
     item9->depth = 0;
-    
+    item9->nextPtr = NULL;
     item9->value.func.num_in_var = 2;
     item9->value.func.in_var_list = malloc(sizeof(unsigned) * item9->value.func.num_in_var);
 
@@ -402,7 +404,7 @@ int insert_embedded_functions() {
     strcpy(item10->name, "chr\0");
 
     item10->depth = 0;
-    
+    item10->nextPtr = NULL;
     item10->value.func.num_in_var = 1;
     item10->value.func.in_var_list = malloc(sizeof(unsigned) * item10->value.func.num_in_var);
 
@@ -452,11 +454,11 @@ void  clear_item(Sym_table_item *item) {
         free(item->name);
     }
 
-    if (item->value.func.num_in_var > 0) {
+    if (item->value.func.in_var_list) {
         free(item->value.func.in_var_list);
     }
 
-    if (item->value.func.num_out_var > 0) {
+    if (item->value.func.out_var_list) {
         free(item->value.func.out_var_list);
     }
 
@@ -465,7 +467,6 @@ void  clear_item(Sym_table_item *item) {
 
 int sem_type_rule(Token *token, Sym_table_item *item_ptr, int in_out_var) {
     sem_get_next_token(token);
-    //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     if ((token->type == INT) || (token->type == FLOAT64) || (token->type == STRING)) {
         if (token->type == INT) {
             token->type = INTEGER;
@@ -480,11 +481,8 @@ int sem_type_rule(Token *token, Sym_table_item *item_ptr, int in_out_var) {
 
         if (in_out_var == IN_VAR) {
             if (item_ptr->value.func.num_in_var > 0) {
-                item_ptr->value.func.in_var_list = realloc(item_ptr->value.func.in_var_list, (item_ptr->value.func.num_in_var + 1) * sizeof(unsigned)); // *var_list ,*(var_list + 1(int)), *(var_list + 2(int))
-            
+                item_ptr->value.func.in_var_list = realloc(item_ptr->value.func.in_var_list, (item_ptr->value.func.num_in_var + 1) * sizeof(unsigned)); 
                 if(!item_ptr->value.func.in_var_list) {
-                    //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-                    //clear_item(item_ptr);
                     return INTERNAL_ERROR;
                 }
             }
@@ -494,10 +492,8 @@ int sem_type_rule(Token *token, Sym_table_item *item_ptr, int in_out_var) {
         }
         else {
             if (item_ptr->value.func.num_out_var > 0) {
-                item_ptr->value.func.out_var_list = realloc(item_ptr->value.func.out_var_list, (item_ptr->value.func.num_out_var + 1) * sizeof(unsigned)); // *var_list ,*(var_list + 1(int)), *(var_list + 2(int))
+                item_ptr->value.func.out_var_list = realloc(item_ptr->value.func.out_var_list, (item_ptr->value.func.num_out_var + 1) * sizeof(unsigned));
                 if(!item_ptr->value.func.out_var_list) {
-                    //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-                    //clear_item(item_ptr);
                     return INTERNAL_ERROR;
                 }
             }
@@ -507,8 +503,6 @@ int sem_type_rule(Token *token, Sym_table_item *item_ptr, int in_out_var) {
         }
     }
     else {
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-        //clear_item(item_ptr);
         return SYNTAX_ERROR;
     }
     //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
@@ -580,7 +574,6 @@ int sem_type_next_rule(Token *token, Sym_table_item *item_ptr, int in_out_var) {
 
     int retval = sem_type_rule(token, item_ptr, in_out_var);
     if (retval) {
-        //clear_item(item_ptr);
         return retval;
     }
 
@@ -645,31 +638,24 @@ int sem_return_types_rule(Token *token, Sym_table_item *item_ptr, int in_out_var
 int sym_item_init(Sym_table_item *item_ptr) {
     item_ptr->value.func.in_var_list = malloc(sizeof(unsigned));
     if (!(item_ptr->value.func.in_var_list)) {
-        //clear_item(item_ptr);
         return INTERNAL_ERROR;
     }
     item_ptr->value.func.num_in_var = 0;
 
     item_ptr->value.func.out_var_list = malloc(sizeof(unsigned));
     if (!(item_ptr->value.func.out_var_list)) {
-        ////clear_item(item_ptr);
         return INTERNAL_ERROR;
     }
     item_ptr->value.func.num_out_var = 0;
+    item_ptr->nextPtr = NULL;
     return 0;
 }
 
 int fill_function_prototype_list() {
     int retval = 0;
     Token token;
-    //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-
     retval = insert_embedded_functions();
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-
     if (retval) {
-            //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-
         return retval;
     }
 
@@ -681,9 +667,7 @@ int fill_function_prototype_list() {
         if (token.type == FUNC) {
             //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             Sym_table_item *sym_table_item_ptr = malloc(sizeof(Sym_table_item));
-            //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             if (!sym_table_item_ptr) {
-                //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                 clear_item(sym_table_item_ptr);
                 return INTERNAL_ERROR;
             }
@@ -737,17 +721,13 @@ int fill_function_prototype_list() {
             if (sym_table_item_ptr->value.func.num_in_var == 0) {
                 free(sym_table_item_ptr->value.func.in_var_list);
             }
-
-            //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
   
             if (sem_return_types_rule(&token, sym_table_item_ptr, OUT_VAR)) {
-                //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                 clear_item(sym_table_item_ptr);
                 return SYNTAX_ERROR;
             }
 
             if (sym_table_item_ptr->value.func.num_out_var == 0) {
-                //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                 free(sym_table_item_ptr->value.func.out_var_list);
             }
 
@@ -757,20 +737,6 @@ int fill_function_prototype_list() {
                 clear_item(sym_table_item_ptr);
                 return retval;
             }
-          /*  // -----------print item ------------
-            printf("name: %s\n", sym_table_item_ptr->name);
-
-            printf("insize: %u\n", sym_table_item_ptr->value.func.num_in_var);
-            for (unsigned i = 0; i < sym_table_item_ptr->value.func.num_in_var; i++) {
-                printf("i = %u\n", i);
-                //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-                printf("in_var: %d\n", sym_table_item_ptr->value.func.in_var_list[i]);
-            }
-            
-            printf("outsize: %u\n", sym_table_item_ptr->value.func.num_out_var);
-            for (unsigned i = 0; i < sym_table_item_ptr->value.func.num_out_var; i++) {
-                printf("out_var: %d\n", sym_table_item_ptr->value.func.out_var_list[i]);
-            }*/
         }
     }
     

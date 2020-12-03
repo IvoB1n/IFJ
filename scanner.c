@@ -16,7 +16,7 @@ void print_scan_token (Token *token) {
 int init_token(char c, Token *token) {
     token->data = malloc(sizeof(char));
     if (!(token->data)) {
-        fprintf(stderr, "Malloc error\n");
+        //fprintf(stderr, "Malloc error\n");
         free(token->data);
         return INTERNAL_ERROR;
     } else {
@@ -29,7 +29,7 @@ int init_token(char c, Token *token) {
 int expand_token(char c, Token *token) {
     token->data = realloc(token->data, (token->data_size + 1) * sizeof(char));
     if (!(token->data)) {
-        fprintf(stderr, "Realloc error\n");
+        //fprintf(stderr, "Realloc error\n");
         free(token->data);
         return INTERNAL_ERROR;
         
@@ -60,7 +60,7 @@ void parser_function (Token *token) {
             return;
         }
     }
-    print_scan_token(token);
+    //print_scan_token(token);
     DLInsertLast(&token_list, token);
     free_token(token);
 }

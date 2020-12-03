@@ -194,10 +194,12 @@ void pop(tDLList *L){
         }
 
         if (element) {
-            if (element->token.type == DOLLAR || element->token.type == SHIFT || element->token.type == E) {
+            if (element->token.type == DOLLAR || element->token.type == SHIFT || element->token.type == E ){
                 if (element->token.data) {
                     free(element->token.data);
                 }
+                free(element);
+            } else if (element->token.type == I) {
                 free(element);
             }
         }
@@ -216,10 +218,29 @@ void insert_E(tDLList *L){
     DLInsertFirst(L, &token);
 }
 
-// void exp_list_dtor(tDLList *EList, tDLList *stack) {
-//     // DLDisposeList(EList);
-//     // DLDisposeList(stack);
-// }
+void exp_list_dtor(tDLList *L) {
+    tDLElemPtr element;
+    if (L->First) {
+        while (L->First != NULL) {
+            element = L->First;
+            L->First = element->rptr;
+
+            if (element) {
+                if (element->token.type == DOLLAR || element->token.type == SHIFT || element->token.type == E ){
+                    if (element->token.data) {
+                        free(element->token.data);
+                    }
+                    free(element);
+                } else if (element->token.type == I) {
+                    free(element);
+                }
+            }
+        }
+    }
+
+    L->Last = NULL;
+    L->Act = NULL;
+}
 
 int div_by_zero_check(tDLElemPtr elem) {
     char* intz = "0\0";
@@ -340,6 +361,7 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *token_list, tDLList *types_list,
     if ((*exp_t == IF || *exp_t == FOR) && ops == 0 && n_of_var > 0) {
         return SEMANTIC_DATA_TYPES_ERROR;
     }
+    
     return err;
 }
 
@@ -493,7 +515,6 @@ int reduce(tDLList *stack, int *stack_size, unsigned* depth, unsigned* func_call
 }
 
 int expression(tDLList *types_list, unsigned exp_t, unsigned depth, unsigned func_call_num) {
-    // fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     ops = 0;
     done_ops = 0;
     // fprintf(stderr, "~~~~~~~~~~~~~~~~~search~~~~~~~~~~~~~~~~~~~~~~~~~\n");
@@ -504,7 +525,8 @@ int expression(tDLList *types_list, unsigned exp_t, unsigned depth, unsigned fun
     unsigned err = exp_list_ctor(&L, &token_list, types_list, &exp_t, depth);
     if (err) {
         fprintf(stderr, "ERROR IN LIST CTOR\n");
-        // exp_list_dtor(&stack, &L);
+        exp_list_dtor(&stack);
+        exp_list_dtor(&L);
         return err;
     }
 
@@ -542,15 +564,18 @@ int expression(tDLList *types_list, unsigned exp_t, unsigned depth, unsigned fun
             case REDUCE:
                 retval = reduce(&stack, &stack_size, &depth, &func_call_num);
                 if (retval) {
-                    // exp_list_dtor(&stack, &L);
+                    exp_list_dtor(&stack);
+                    exp_list_dtor(&L);
                     return retval;
                 }
                 break;
             case NONE:
-                // exp_list_dtor(&stack, &L);
+                exp_list_dtor(&stack);
+                exp_list_dtor(&L);
                 return SYNTAX_ERROR;
             default:
-                // exp_list_dtor(&stack, &L);
+                exp_list_dtor(&stack);
+                exp_list_dtor(&L);
                 return SYNTAX_ERROR;
         };
         // printf("---stack items---\n");
@@ -562,7 +587,8 @@ int expression(tDLList *types_list, unsigned exp_t, unsigned depth, unsigned fun
 
     // fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     exp_type = 0;
-    // exp_list_dtor(&stack, &L);
+    exp_list_dtor(&stack);
+    exp_list_dtor(&L);
 
     return 0; 
 }
