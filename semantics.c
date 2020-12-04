@@ -455,7 +455,7 @@ void  clear_item(Sym_table_item *item) {
     }
 
     if (item->value.func.in_var_list) {
-        free(item->value.func.in_var_list);
+        free(item->value.func.in_var_list); // TODO why doublefree
     }
 
     if (item->value.func.out_var_list) {
@@ -516,19 +516,19 @@ int sem_param_next_rule(Token *token, Sym_table_item *item_ptr, int in_out_var) 
     }
 
     if (token->type != COMMA) {
-        //clear_item(item_ptr);
+        clear_item(item_ptr); // IvoB1n
         return SYNTAX_ERROR;
     }
 
     sem_get_next_token(token);
     if (token->type != ID) {
-        //clear_item(item_ptr);
+        clear_item(item_ptr); // IvoB1n
         return SYNTAX_ERROR;
     }
     
     int retval = sem_type_rule(token, item_ptr, in_out_var);
     if (retval) {
-        //clear_item(item_ptr);
+        clear_item(item_ptr); // IvoB1n
         return retval;
     }
     
@@ -676,7 +676,7 @@ int fill_function_prototype_list() {
             //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             if (retval) {
                 //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-                clear_item(sym_table_item_ptr);
+                // clear_item(sym_table_item_ptr); // IvoB1n
                 return retval;
             }
 
@@ -688,7 +688,7 @@ int fill_function_prototype_list() {
             //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             if (token.type != ID) {
             //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-                clear_item(sym_table_item_ptr);
+                // clear_item(sym_table_item_ptr); // IvoB1n
                 return SYNTAX_ERROR;
             }
 
@@ -697,7 +697,7 @@ int fill_function_prototype_list() {
             //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             sym_table_item_ptr->name = malloc(token.data_size);
             if (!(sym_table_item_ptr->name)) {
-                clear_item(sym_table_item_ptr);
+                // clear_item(sym_table_item_ptr); // IvoB1n
                 return INTERNAL_ERROR;
             }
 
@@ -708,22 +708,22 @@ int fill_function_prototype_list() {
             //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             sem_get_next_token(&token);
             if (token.type != ROUND_BR_L) {
-                clear_item(sym_table_item_ptr);
+                // clear_item(sym_table_item_ptr); // IvoB1n
                 return SYNTAX_ERROR;
             }
             //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
             if (sem_param_rule(&token, sym_table_item_ptr, IN_VAR)) {
-                clear_item(sym_table_item_ptr);
+                // clear_item(sym_table_item_ptr); // IvoB1n
                 return SYNTAX_ERROR;
             }
 
             if (sym_table_item_ptr->value.func.num_in_var == 0) {
-                free(sym_table_item_ptr->value.func.in_var_list);
+                // free(sym_table_item_ptr->value.func.in_var_list); // IvoB1n
             }
   
             if (sem_return_types_rule(&token, sym_table_item_ptr, OUT_VAR)) {
-                clear_item(sym_table_item_ptr);
+                // clear_item(sym_table_item_ptr); // IvoB1n
                 return SYNTAX_ERROR;
             }
 

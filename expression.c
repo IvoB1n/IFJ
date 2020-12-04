@@ -253,65 +253,65 @@ int div_by_zero_check(tDLElemPtr elem) {
     return 0;
 }
 
-unsigned exp_list_ctor(tDLList *EList, tDLList *token_list, tDLList *types_list, unsigned *exp_t, unsigned depth) {
+unsigned exp_list_ctor(tDLList *EList, tDLList *types_list, unsigned *exp_t, unsigned depth) {
     exp_type = 0;
     unsigned err = 0;
     unsigned n_of_var = 0;
     Sym_table_item *item;
 
-    while (token_list->Act != NULL) {
+    while (token_list.Act != NULL) {
         // fprintf(stderr, "prev= '%s' in_token= '%s' next= '%s'\n",token_list->Act->lptr->token.data, token_list->Act->token.data, token_list->Act->rptr->token.data);
-        if (token_list->Act->token.type == END_OF_LINE ||
-            token_list->Act->token.type == CURLY_BR_L  ||
-            token_list->Act->token.type == SEMICOLON   ||
-            token_list->Act->token.type == COMMA) {
+        if (token_list.Act->token.type == END_OF_LINE ||
+            token_list.Act->token.type == CURLY_BR_L  ||
+            token_list.Act->token.type == SEMICOLON   ||
+            token_list.Act->token.type == COMMA) {
             break;
-        } else if (token_list->Act->rptr->token.type == END_OF_LINE &&
-                          token_list->Act->token.type == ROUND_BR_R && 
+        } else if (token_list.Act->rptr->token.type == END_OF_LINE &&
+                          token_list.Act->token.type == ROUND_BR_R && 
                           *exp_t == FUNC) {
             break;
         }
 
-        switch (token_list->Act->token.type) {
+        switch (token_list.Act->token.type) {
             case ID:
-                item = sym_table_search_item(&sym_table, token_list->Act->token.data, depth);
+                item = sym_table_search_item(&sym_table, token_list.Act->token.data, depth);
                 if (item == NULL) {
                     // fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                     // fprintf(stderr, "SEMANTIC_UNDEF_EXP for=%s\n", token_list->Act->token.data);
                     err = SEMANTIC_UNDEFINED_VAR_ERROR;
                     break;
                 } else {
-                    if (strcmp(token_list->Act->token.data, "_\0") == 0) {
+                    if (strcmp(token_list.Act->token.data, "_\0") == 0) {
                         err = SEMANTIC_OTHER_ERRORS;
                     } else {
                         exp_type = item->value.var.type;
-                        DLInsertLast(EList, &(token_list->Act->token));
+                        DLInsertLast(EList, &(token_list.Act->token));
                         EList->Last->token.type = exp_type;
                     }
                 }
                 break;
             case STR_END:
-                if (token_list->Act->rptr->token.type == DIV ||
-                    token_list->Act->rptr->token.type == SUB ||
-                    token_list->Act->rptr->token.type == MUL) {
+                if (token_list.Act->rptr->token.type == DIV ||
+                    token_list.Act->rptr->token.type == SUB ||
+                    token_list.Act->rptr->token.type == MUL) {
                     err = SEMANTIC_DATA_TYPES_ERROR;
                 }
-                exp_type = token_list->Act->token.type;
-                DLInsertLast(EList, &(token_list->Act->token));
+                exp_type = token_list.Act->token.type;
+                DLInsertLast(EList, &(token_list.Act->token));
                 break;
             case INTEGER:
             case FLOAT:
-                if (div_by_zero_check(token_list->Act)) {
+                if (div_by_zero_check(token_list.Act)) {
                     err = SEMANTIC_ZERO_DIVIDION_ERROR;
                 }
-                exp_type = token_list->Act->token.type;
-                DLInsertLast(EList, &(token_list->Act->token));
+                exp_type = token_list.Act->token.type;
+                DLInsertLast(EList, &(token_list.Act->token));
                 break;
             default:
-                DLInsertLast(EList, &(token_list->Act->token));
+                DLInsertLast(EList, &(token_list.Act->token));
                 break;
         };
-        token_list->Act = token_list->Act->rptr;
+        token_list.Act = token_list.Act->rptr;
     }
 
     Token token_exp_type;
@@ -522,7 +522,7 @@ int expression(tDLList *types_list, unsigned exp_t, unsigned depth, unsigned fun
     DLInitList(&stack);
     tDLList L;
     DLInitList(&L);
-    unsigned err = exp_list_ctor(&L, &token_list, types_list, &exp_t, depth);
+    unsigned err = exp_list_ctor(&L,types_list, &exp_t, depth);
     if (err) {
         fprintf(stderr, "ERROR IN LIST CTOR\n");
         exp_list_dtor(&stack);
@@ -557,7 +557,7 @@ int expression(tDLList *types_list, unsigned exp_t, unsigned depth, unsigned fun
 
                 DLPreInsert (&stack, &token);
 
-                DLInsertFirst(&stack, &L.Act->token);
+                DLInsertFirst(&stack, &(L.Act->token));
                 L.Act = L.Act->rptr;
                 stack_size+=2;
                 break;
