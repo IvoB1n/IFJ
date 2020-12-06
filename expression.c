@@ -9,7 +9,13 @@ unsigned exp_type;
 
 #define PREC_TABLE_SIZE 14
 
-void generate_str (tDLElemPtr s_token) { //add from hex to dec
+/**
+ * Converts string to ifj20.code format
+ * 
+ * @param s_token pointer to token list node, with string
+ * @return 
+ */
+void generate_str (tDLElemPtr s_token) {
     for (unsigned i = 1; i < s_token->token.data_size-2; i++) {
         if (s_token->token.data[i] == '#') {
             fprintf(stdout, "\\%03d", '#');
@@ -30,13 +36,19 @@ void generate_str (tDLElemPtr s_token) { //add from hex to dec
         } 
         else if ((s_token->token.data_size-1-i) >= 4) {
             if(s_token->token.data[i] == '\\' && s_token->token.data[i+1] == 'x') {
-                char s[2];
+                char *s;
+                s = malloc(sizeof(char)*2);
+                if (!s) {
+                    fprintf(stderr, "memory allocation error\n");
+                    return;
+                }
                 s[0] = s_token->token.data[i+2];
                 s[1] = s_token->token.data[i+3];
                 int x;
                 sscanf(s, "%x", &x);
-                printf("\\%03u", x);
+                fprintf(stdout, "\\%03u", x);
                 i+=3;
+                free(s);
             } else {
                 fprintf(stdout, "%c", s_token->token.data[i]);
             }
@@ -47,11 +59,16 @@ void generate_str (tDLElemPtr s_token) { //add from hex to dec
     fprintf(stdout, "\n");
 }
 
+/**
+ * Generate ifj20.code variable push
+ * 
+ * @param s_token pointer to token list node, with variable
+ * @return 
+ */
 void generate_push_by_type(tDLElemPtr s_token, unsigned *depth ) {
     Sym_table_item *item;
     if (((s_token->token.data[0] >= 'a' && s_token->token.data[0] <= 'z') ||
          (s_token->token.data[0] >= 'A' && s_token->token.data[0] <= 'Z'))) {
-            // print_sym_table_items(&asm_table);
         item = sym_table_search_item(&sym_table, s_token->token.data, *depth);
         if (item == NULL) {
             return;
@@ -71,6 +88,9 @@ void generate_push_by_type(tDLElemPtr s_token, unsigned *depth ) {
     }
 }
 
+/**
+ * Precedent table 
+ */
 unsigned prec_table [PREC_TABLE_SIZE][PREC_TABLE_SIZE] = {
 //      +       -      *       /       (       )      <       <=      >       >=      ==     !=       i      $
     {REDUCE, REDUCE, SHIFT,  SHIFT,  SHIFT, REDUCE, REDUCE, REDUCE, REDUCE, REDUCE, REDUCE, REDUCE, SHIFT, REDUCE}, // +
@@ -88,6 +108,12 @@ unsigned prec_table [PREC_TABLE_SIZE][PREC_TABLE_SIZE] = {
     {REDUCE, REDUCE, REDUCE, REDUCE, NONE,  REDUCE, REDUCE, REDUCE, REDUCE, REDUCE, REDUCE, REDUCE, NONE,  REDUCE}, // i
     {SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, NONE,   SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, NONE }}; // $
 
+/**
+ * Generate ifj20.code arithmetical operators
+ * 
+ * @param s_token pointer to token list node, with arithm operator
+ * @return 
+ */
 void arithm_template(tDLElemPtr s_token) {
     if (exp_type != STR_END) {
         switch(s_token->token.type) {
@@ -123,6 +149,12 @@ void arithm_template(tDLElemPtr s_token) {
     }
 }
 
+/**
+ * Generate ifj20.code logical operators
+ * 
+ * @param s_token pointer to token list node, with arithm operator
+ * @return 
+ */
 void logic_template(tDLElemPtr s_token) {
     switch (s_token->token.type) {
         case L:
@@ -149,10 +181,23 @@ void logic_template(tDLElemPtr s_token) {
     };
 }
 
+/**
+ * Returns precedent table rule due to stack and input symbols
+ * 
+ * @param sym1 stack symbol type
+ * @param sym2 input symbol type
+ * @return precedent table rule
+ */
 unsigned get_prec_table_rule(unsigned sym1, unsigned sym2) {
     return prec_table[sym1][sym2];
 }
 
+/**
+ * Prints expression list for testing purpose
+ * 
+ * @param L pointer to expression list
+ * @return prints list
+ */
 void print_exp_list(tDLList *L) {
     tDLElemPtr tmp = L->First;
     fprintf(stderr, "---------------\n");
@@ -163,6 +208,13 @@ void print_exp_list(tDLList *L) {
     fprintf(stderr, "---------------\n");
 }
 
+/**
+ * Insert first list node with needed token type
+ * 
+ * @param L pointer to token list
+ * @param type type to add
+ * @return
+ */
 void insert_first_by_type(tDLList *L, unsigned type){
     Token token;
 
@@ -173,6 +225,12 @@ void insert_first_by_type(tDLList *L, unsigned type){
     DLInsertFirst(L, &token);
 }
 
+/**
+ * Delete first list node
+ * 
+ * @param L pointer to token list
+ * @return
+ */
 void pop(tDLList *L){
     tDLElemPtr element;
 
@@ -194,7 +252,9 @@ void pop(tDLList *L){
         }
 
         if (element) {
-            if (element->token.type == DOLLAR || element->token.type == SHIFT || element->token.type == E ){
+            if (element->token.type == DOLLAR || 
+                element->token.type == SHIFT  ||
+                element->token.type == E ){
                 if (element->token.data) {
                     free(element->token.data);
                 }
@@ -206,6 +266,12 @@ void pop(tDLList *L){
     }
 } 
 
+/**
+ * Insert first list node with 'E'(nonterminal) token type and copy removed token value
+ * 
+ * @param L pointer to token list
+ * @return
+ */
 void insert_E(tDLList *L){    
     Token token;
     token.type = E;
@@ -218,6 +284,12 @@ void insert_E(tDLList *L){
     DLInsertFirst(L, &token);
 }
 
+/**
+ * List destructor
+ * 
+ * @param L pointer to token list
+ * @return
+ */
 void exp_list_dtor(tDLList *L) {
     tDLElemPtr element;
     if (L->First) {
@@ -242,6 +314,13 @@ void exp_list_dtor(tDLList *L) {
     L->Act = NULL;
 }
 
+/**
+ * Div by zero const control
+ * 
+ * @param elem pointer to token list element
+ * @return 0 successful control
+ * @return 1 dividion by zero const accrued
+ */
 int div_by_zero_check(tDLElemPtr elem) {
     char* intz = "0\0";
     char* float1z = "0.0\0";
@@ -253,6 +332,20 @@ int div_by_zero_check(tDLElemPtr elem) {
     return 0;
 }
 
+/**
+ * Expression token list creator
+ * 
+ * @param Elist pointer to token list
+ * @param types_list pointer to Data types list
+ * @param exp_t expression type (exp, func, etc)
+ * @param depth expression depth
+ * @return 0 If the expression was processed successfully
+ * @return 2 Expression syntax error
+ * @return 3 Expression undefind variable error
+ * @return 5 Expression data types error
+ * @return 9 Expression division by zero constant error
+ * @return 99 Internal error (malloc, etc)
+ */
 unsigned exp_list_ctor(tDLList *EList, tDLList *types_list, unsigned *exp_t, unsigned depth) {
     exp_type = 0;
     unsigned err = 0;
@@ -260,7 +353,6 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *types_list, unsigned *exp_t, uns
     Sym_table_item *item;
 
     while (token_list.Act != NULL) {
-        // fprintf(stderr, "prev= '%s' in_token= '%s' next= '%s'\n",token_list->Act->lptr->token.data, token_list->Act->token.data, token_list->Act->rptr->token.data);
         if (token_list.Act->token.type == END_OF_LINE ||
             token_list.Act->token.type == CURLY_BR_L  ||
             token_list.Act->token.type == SEMICOLON   ||
@@ -276,13 +368,11 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *types_list, unsigned *exp_t, uns
             case ID:
                 item = sym_table_search_item(&sym_table, token_list.Act->token.data, depth);
                 if (item == NULL) {
-                    // fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-                    // fprintf(stderr, "SEMANTIC_UNDEF_EXP for=%s\n", token_list->Act->token.data);
                     err = SEMANTIC_UNDEFINED_VAR_ERROR;
                     break;
                 } else {
                     if (strcmp(token_list.Act->token.data, "_\0") == 0) {
-                        err = SEMANTIC_OTHER_ERRORS;
+                        err = SEMANTIC_DATA_TYPES_ERROR;
                     } else {
                         exp_type = item->value.var.type;
                         DLInsertLast(EList, &(token_list.Act->token));
@@ -365,7 +455,12 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *types_list, unsigned *exp_t, uns
     return err;
 }
 
-
+/**
+ * Find first nonterminal token
+ * 
+ * @param L pointer to precedental stack
+ * @return pointer to nonterminal item
+ */
 tDLElemPtr get_non_term(tDLList *L){
     tDLElemPtr non_term = L->First;
     while(non_term != NULL){
@@ -378,6 +473,12 @@ tDLElemPtr get_non_term(tDLList *L){
    return non_term;
 }
 
+/**
+ * Count nonterminal items at list
+ * 
+ * @param L pointer to precedental stack
+ * @return number of nonterminal items
+ */
 int count_active_non_terms(tDLList *L){
     tDLElemPtr non_term = L->First;
     int count = 0;
@@ -392,6 +493,17 @@ int count_active_non_terms(tDLList *L){
    return count;
 }
 
+/**
+ * Reduce rule driven by precedent table
+ * 
+ * @param stack pointer to token stack
+ * @param stack_size number of stack elements
+ * @param exp_t expression type (exp, func, etc)
+ * @param depth expression depth
+ * @return 0 If the expression was processed successfully
+ * @return 2 Expression syntax error
+ * @return 5 Expression data types error
+ */
 int reduce(tDLList *stack, int *stack_size, unsigned* depth, unsigned* func_call_num) {
     tDLElemPtr s_token = get_non_term(stack);
     switch(s_token->token.type) {

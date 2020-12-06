@@ -46,7 +46,7 @@ void pop_stack(unsigned *pop_num, tDLList *stack) {
 }
 
 void print_token (Token *token) {
-    //fprintf(stderr, "                       type= %-4d data= \"%s\"%-5s size= %-9d\n", token->type, token->data, "", token->data_size);
+    fprintf(stderr, "                       type= %-4d data= \"%s\"%-5s size= %-9d\n", token->type, token->data, "", token->data_size);
 }
 
 void print_token_list (tDLList *L) {

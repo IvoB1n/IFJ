@@ -77,9 +77,9 @@ test() {
             ret_valcom=$?
             echo " ~~~~~~~~~ "
             ./ic20int gen.code
+            ret_valint=$?
             echo ""
             echo " ~~~~~~~~~ "
-            ret_valint=$?
             
             line=$(head -n 1 $1)
             echo "return value comp:   $ret_valcom "
