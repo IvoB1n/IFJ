@@ -1,9 +1,9 @@
-/* c206.c **********************************************************}
+/* 
 ** Téma: Dvousměrně vázaný lineární seznam from IAL
 **
 **                   Návrh a referenční implementace: Bohuslav Křena, říjen 2001
 **                            Přepracované do jazyka C: Martin Tuček, říjen 2004
-**                                            Úpravy: Kamil Jeřábek, září 2020
+**                                              Úpravy: Kamil Jeřábek, září 2020
 */
 
 /**

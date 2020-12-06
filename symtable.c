@@ -29,7 +29,6 @@ Sym_table_item *init_search_item(Sym_table *table, char *name, unsigned depth) {
 }
 
 int print_sym_table_items (Sym_table *table) {
-    //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
    if (table == NULL) {
        return INTERNAL_ERROR;
    }
@@ -76,49 +75,32 @@ void sym_table_init(Sym_table *table) {
 }
 
 int sym_table_insert_item(Sym_table *table, Sym_table_item *node) {
-    //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     Sym_table_item *item = init_search_item(table, node->name, node->depth);
-    //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
     if (item != NULL) {
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         return SEMANTIC_UNDEFINED_VAR_ERROR;
     } else {
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         Sym_table_item *new_item = node;        
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         int index = hash_code(node->name);
-        //fprintf(stderr, "insert_item %s index - %d depth - %u ptr %p\n", node->name, index, node->depth, node);
-        ////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-        if (node->depth < 5){
-            ////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-            new_item->nextPtr = (*table)[index + node->depth * INDEX_SIZE];
 
+        if (node->depth < 5){
+            new_item->nextPtr = (*table)[index + node->depth * INDEX_SIZE];
             (*table)[index + node->depth * INDEX_SIZE] = new_item;
         }
         else {
-            ////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             new_item->nextPtr = (*table)[index + 5 * INDEX_SIZE];
-
             (*table)[index + 5 * INDEX_SIZE] = new_item; 
         }
-        //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         return 0;
     }
 }
 
 void sym_table_delete_on_depth(Sym_table *table, unsigned depth) {
-    //////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     int index = depth * INDEX_SIZE;
-    //////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     Sym_table_item *item_for_delete = NULL;
-    //////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     Sym_table_item *next_item = NULL;
-    //////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-    /*if (item_for_delete == NULL) {
-        ////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-        return;
-    }*/
     unsigned other_lvl = 5;
+
     if (depth >= 5) {
         for (unsigned i = other_lvl * INDEX_SIZE; i < SYM_TABLE_SIZE; i++) {
             if ((*table)[i] != NULL) {
@@ -151,37 +133,28 @@ void sym_table_delete_on_depth(Sym_table *table, unsigned depth) {
         }
     } else {
         for (unsigned i = index; i < (depth + 1) * INDEX_SIZE; i++) {
-            //////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
             if ((*table)[i] != NULL) {
-                //////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                 item_for_delete = (*table)[i];
+
                 while (item_for_delete != NULL) {
-                    //fprintf(stderr, "item ptr1: %p\n", item_for_delete);
-                    //////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                     next_item = item_for_delete->nextPtr;
-                    //////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
                     if (item_for_delete->name) {
-                        //fprintf(stderr, "delete_item %s index - %d\n", item_for_delete->name, i);
-                        //fprintf(stderr, "item for delete2 -- %s\n", item_for_delete->name);
-                        //////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                         free(item_for_delete->name);
                     }
+
                     if (depth == 0) {
                         if (item_for_delete->value.func.num_in_var > 0) {
                             free(item_for_delete->value.func.in_var_list);
-                            //////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                         }
+
                         if (item_for_delete->value.func.num_out_var > 0) {
-                            //////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                             free(item_for_delete->value.func.out_var_list);
                         }
                     }
-                    ////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                     free(item_for_delete);
-                    ////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-
                     item_for_delete = next_item;
-                    ////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                 }
                 (*table)[i] = NULL;
             }
@@ -192,29 +165,28 @@ void sym_table_delete_on_depth(Sym_table *table, unsigned depth) {
 void sym_table_delete_item(Sym_table *table, char* name, unsigned depth) {
     unsigned index = hash_code(name);
     Sym_table_item *item_for_delete = (*table)[index + depth * INDEX_SIZE];
-            //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
     if (item_for_delete == NULL) {
         return;
     }
-        //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
     Sym_table_item *previous_item = NULL;
     Sym_table_item *next_item = NULL;
-        //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
     while (item_for_delete != NULL) {
         next_item = item_for_delete->nextPtr;
-        //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
         if ((strcmp(name, item_for_delete->name) == 0) && (depth == item_for_delete->depth)) {
             if (item_for_delete) {
+
                 if (item_for_delete->name) {
                     free(item_for_delete->name);
                 }
+
                 if (item_for_delete->value.func.num_in_var > 0) {
                     free(item_for_delete->value.func.in_var_list);
                 }
+
                 if (item_for_delete->value.func.num_out_var > 0) {
                     free(item_for_delete->value.func.out_var_list);
                 }
@@ -229,8 +201,6 @@ void sym_table_delete_item(Sym_table *table, char* name, unsigned depth) {
                 return;
             }
         }
-        //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-
         previous_item = item_for_delete;
         item_for_delete = item_for_delete->nextPtr;
     }
@@ -239,101 +209,60 @@ void sym_table_delete_item(Sym_table *table, char* name, unsigned depth) {
 
     
 Sym_table_item *search_on_null_lvl(Sym_table_item *searching_item, char *name, unsigned depth, Sym_table *table) {
-        //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     int index = hash_code(name); 
-    //printf("index search - %d\n", index);
     searching_item = (*table)[index + depth * INDEX_SIZE];  
+
     while (searching_item != NULL) {
-        //printf("depth search - %d\n", depth);
-        //printf("name search - %s\n", name);
-        //printf("searching_item->name - %s\n", searching_item->name);
-        //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
         if ((strcmp(name, searching_item->name) == 0) && (depth == searching_item->depth)) {
-            ////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             return searching_item;
         }
-        //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         searching_item = searching_item->nextPtr;
-        //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     }
     return NULL;
 }
 
 Sym_table_item *search_on_non_null_lvl(Sym_table_item *searching_item, char *name, unsigned depth, Sym_table *table) {
-    //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     int index = hash_code(name);
-    //fprintf(stderr, "depth: %d\n", depth);
-    //printf("index search - %d\n", index);
     while (depth > 0) {
-        //////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
-        //fprintf(stderr, "depth search - %d\n", depth);
         if (depth >= 5) {
-            //////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             searching_item = (*table)[index + 5 * INDEX_SIZE];
+
             while (searching_item != NULL) {
                 if ((strcmp(name, searching_item->name) == 0) && (depth == searching_item->depth)) {
-                    //////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                     return searching_item;
                 }
             
                 searching_item = searching_item->nextPtr;
             }
         }
-        //////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
         if (depth < 5) {
-                    ////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
             searching_item = (*table)[index + depth * INDEX_SIZE];
             while (searching_item != NULL) {
-                //printf("depth search - %d\n", depth);
-                //printf("name search - %s\n", name);
-                //printf("searching_item->name - %s\n", searching_item->name);
-                //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-                //fprintf(stderr, "%s    %s\n", name, searching_item->name);
-                //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                 
                 if (strcmp(name, searching_item->name) == 0) {
-                    //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                     return searching_item;
                 }
                 searching_item = searching_item->nextPtr;
-                //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-            //  if (searching_item->depth == depth + 1) {
-
-                    
-                //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             } 
         }              
-        //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         depth--;
     }
     return NULL;
 }
 
 Sym_table_item *sym_table_search_item(Sym_table *table, char *name, unsigned depth) {
-    //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
     if (table == NULL || name == NULL) {
         return NULL;
     }
     
-    ////fprintf(stderr, "name = %s\n", name);
-    //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-   // int index = hash_code(name);
-    //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-    
-    Sym_table_item *searching_item = NULL;// = (*table)[index + depth * INDEX_SIZE];
-    /*if (searching_item == NULL) {
-        //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-        return NULL;
-    }*/
-    //printf("depth search - %d\n", depth);
-    //printf("name search - %s\n", name);
-   // printf("searching_item->name - %s\n", searching_item->name);
-    //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+    Sym_table_item *searching_item = NULL;
 
     if (depth == 0) {
-        //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         searching_item = search_on_null_lvl(searching_item, name, depth, table);
         if (searching_item) {
             return searching_item;
@@ -341,14 +270,11 @@ Sym_table_item *sym_table_search_item(Sym_table *table, char *name, unsigned dep
             return NULL;
         }
     } else {
-        //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         searching_item = search_on_non_null_lvl(searching_item, name, depth, table);
-        //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
         if (searching_item) {
-            //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             return searching_item;
         } else {
-            //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             return NULL;
         }
     }
@@ -357,40 +283,28 @@ Sym_table_item *sym_table_search_item(Sym_table *table, char *name, unsigned dep
 void sym_table_clear_all(Sym_table *table) {
 	Sym_table_item *item = NULL;
 	Sym_table_item *deleted_item = NULL;
+
 	for (int i = 0; i < SYM_TABLE_SIZE; i++) {
 		item = (*table)[i];
+
 		while (item != NULL) {
 			deleted_item = item;
 			item = deleted_item->nextPtr;
 
-            //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             if (deleted_item->name) {
-                //printf("name: %s\n", deleted_item->name);
                 free(deleted_item->name);
             }
 
-            //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-         //   printf("insize: %u\n", deleted_item->value.func.num_in_var);
-            if (deleted_item->value.func.num_in_var > 0) {
-                for (unsigned i = 0; i < deleted_item->value.func.num_in_var; i++) {
-         //           printf("in_var: %d\n", deleted_item->value.func.in_var_list[i]);
-                }    
+            if (deleted_item->value.func.num_in_var > 0) {  
                 free(deleted_item->value.func.in_var_list);
             }
-            //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-              //printf("outsize: %u\n", deleted_item->value.func.num_out_var);
+
             if (deleted_item->value.func.num_out_var > 0) {
-                for (unsigned i = 0; i < deleted_item->value.func.num_out_var; i++) {
-          //          printf("out_var: %d\n", deleted_item->value.func.out_var_list[i]);
-                }
                 free(deleted_item->value.func.out_var_list);
             }
-            //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             if (deleted_item) {
-         //       //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 			    free(deleted_item);
             }
-         //   //////////fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 		}
 		(*table)[i] = NULL;
 	}

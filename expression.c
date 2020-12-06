@@ -37,13 +37,14 @@ void generate_str (tDLElemPtr s_token) {
         else if ((s_token->token.data_size-1-i) >= 4) {
             if(s_token->token.data[i] == '\\' && s_token->token.data[i+1] == 'x') {
                 char *s;
-                s = malloc(sizeof(char)*2);
+                s = malloc(sizeof(char)*3);
                 if (!s) {
                     fprintf(stderr, "memory allocation error\n");
                     return;
                 }
                 s[0] = s_token->token.data[i+2];
                 s[1] = s_token->token.data[i+3];
+                s[2] = '\0';
                 int x;
                 sscanf(s, "%x", &x);
                 fprintf(stdout, "\\%03u", x);
@@ -629,7 +630,6 @@ int reduce(tDLList *stack, int *stack_size, unsigned* depth, unsigned* func_call
 int expression(tDLList *types_list, unsigned exp_t, unsigned depth, unsigned func_call_num) {
     ops = 0;
     done_ops = 0;
-    // fprintf(stderr, "~~~~~~~~~~~~~~~~~search~~~~~~~~~~~~~~~~~~~~~~~~~\n");
     tDLList stack;
     DLInitList(&stack);
     tDLList L;
@@ -645,8 +645,6 @@ int expression(tDLList *types_list, unsigned exp_t, unsigned depth, unsigned fun
     L.Act = L.First;
 
     insert_first_by_type(&stack, DOLLAR);
-    // fprintf(stderr, "PrintExpList!!1!\n");
-    // print_exp_list(&L);
 
     tDLElemPtr s_token = get_non_term(&stack);
     int retval = 0;
@@ -690,14 +688,10 @@ int expression(tDLList *types_list, unsigned exp_t, unsigned depth, unsigned fun
                 exp_list_dtor(&L);
                 return SYNTAX_ERROR;
         };
-        // printf("---stack items---\n");
-        // print_exp_list(&stack);
         
         s_token = get_non_term(&stack);
     } while ((s_token->token.type != DOLLAR) || (L.Act->token.type != DOLLAR));
-    // print_exp_list(&token_list);
 
-    // fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     exp_type = 0;
     exp_list_dtor(&stack);
     exp_list_dtor(&L);

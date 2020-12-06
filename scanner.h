@@ -55,7 +55,7 @@ typedef struct {
 */
 
 /**
- * Will issue the scanned token
+ * Will issue the scanned token (for tests)
  * 
  * @param token Token Pointer to output token
  */
