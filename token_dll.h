@@ -1,4 +1,24 @@
-//#include"scanner.h"
+/* 
+** Téma: Dvousměrně vázaný lineární seznam from IAL
+**
+**                   Návrh a referenční implementace: Bohuslav Křena, říjen 2001
+**                            Přepracované do jazyka C: Martin Tuček, říjen 2004
+**                                              Úpravy: Kamil Jeřábek, září 2020
+*/
+
+/**
+ * @file token_dll.h
+ * 
+ * Two-way bound linear list
+ * 
+ * @brief IFJ Projekt 2020, Tým 58
+ * 
+ * @author <xbobro01> Bobrov Ivan
+ * @author <xcaras00> Carasec Elena
+ * @author <xkozhe00> Kozhevnikov Dmitrii
+ * @author <xsenic00> Senichak Yahor
+ */
+
 #include<stdio.h>
 #include<stdlib.h>
 
@@ -8,161 +28,105 @@
 extern int errflg;
 extern int solved;
 
-
+/**
+ * @struct Token
+ */
 typedef struct {
-    unsigned type;   // type of token
-    char *data; //  data of token
-    unsigned data_size; // size of token 
+    unsigned type;       // type of token
+    char *data;          //  data of token
+    unsigned data_size;  // size of token 
 } Token;
 
-typedef struct tDLElem {                 /* prvek dvousměrně vázaného seznamu */ 
-        Token token;                                            /* užitečná data */
-        struct tDLElem *lptr;          /* ukazatel na předchozí prvek seznamu */
-        struct tDLElem *rptr;        /* ukazatel na následující prvek seznamu */
+/**
+ * @struct tDLElemPtr
+ */
+typedef struct tDLElem {               // two-way bound list element
+        Token token;                   // token
+        struct tDLElem *lptr;          // pointer to previous list element
+        struct tDLElem *rptr;          // pointer to the following list element
 } *tDLElemPtr;
 
-typedef struct {                                  /* dvousměrně vázaný seznam */
-    tDLElemPtr First;                      /* ukazatel na první prvek seznamu */
-    tDLElemPtr Act;                     /* ukazatel na aktuální prvek seznamu */
-    tDLElemPtr Last;                    /* ukazatel na posledni prvek seznamu */
+/**
+ * @struct tDLList
+ */
+typedef struct {                       // two-way bound list
+    tDLElemPtr First;                  // pointer to the first element of the list
+    tDLElemPtr Act;                    // pointer to current list item
+    tDLElemPtr Last;                   // pointer to the last element of the list
 } tDLList;
 
 tDLList token_list;
-/* prototypy jednotlivých funkcí */
 
-/*
-** Vytiskne upozornění na to, že došlo k chybě.
-** Tato funkce bude volána z některých dále implementovaných operací.
-**/	
-void DLError();
+/**
+ * Initializes list L before it is first used
+ * 
+ * @param L Pointer to list
+ */
+void DLInitList (tDLList *L);
 
-/*
-** Provede inicializaci seznamu L před jeho prvním použitím (tzn. žádná
-** z následujících funkcí nebude volána nad neinicializovaným seznamem).
-** Tato inicializace se nikdy nebude provádět nad již inicializovaným
-** seznamem, a proto tuto možnost neošetřujte. Vždy předpokládejte,
-** že neinicializované proměnné mají nedefinovanou hodnotu.
-**/
-void DLInitList (tDLList *);
+/**
+ * Cancels all elements of list L and returns the list to the state it was in after initialization 
+ * Disturbed list elements will be correctly released by calling Operation Free
+ *
+ * @param L Pointer to list
+ */
+void DLDisposeList (tDLList *L);
 
-/*
-** Zruší všechny prvky seznamu L a uvede seznam do stavu, v jakém
-** se nacházel po inicializaci. Rušené prvky seznamu budou korektně
-** uvolněny voláním operace free. 
-**/
-void DLDisposeList (tDLList *);
+/**
+ * Inserts a new element at the top of the list L
+ *
+ * @param L Pointer to list
+ * @param token Token Pointer to output token
+ */
+void DLInsertFirst (tDLList *L, Token *token);
 
-/*
-** Vloží nový prvek na začátek seznamu L.
-** V případě, že není dostatek paměti pro nový prvek při operaci malloc,
-** volá funkci DLError().
-**/
-void DLInsertFirst (tDLList *, Token *);
+/**
+ * Inserts a new element at the end of the list L
+ *
+ * @param L Pointer to list
+ * @param token Token Pointer to output token
+ */
+void DLInsertLast(tDLList *L, Token *token);
 
-/*
-** Vloží nový prvek na konec seznamu L (symetrická operace k DLInsertFirst).
-** V případě, že není dostatek paměti pro nový prvek při operaci malloc,
-** volá funkci DLError().
-**/
-void DLInsertLast(tDLList *, Token *);
+/**
+ * Sets the activity to the first element of the list L
+ *
+ * @param L Pointer to list
+ */
+void DLFirst (tDLList *L);
 
-/*
-** Nastaví aktivitu na první prvek seznamu L.
-** Funkci implementujte jako jediný příkaz (nepočítáme-li return),
-** aniž byste testovali, zda je seznam L prázdný.
-**/
-void DLFirst (tDLList *);
+/**
+ * Sets the activity to the last item in the L list
+ *
+ * @param L Pointer to list
+ */
+void DLLast (tDLList *L);
 
-/*
-** Nastaví aktivitu na poslední prvek seznamu L.
-** Funkci implementujte jako jediný příkaz (nepočítáme-li return),
-** aniž byste testovali, zda je seznam L prázdný.
-**/
-void DLLast (tDLList *);
+/**
+ * Cancels the last element of list L
+ *
+ * @param L Pointer to list
+ */
+void DLDeleteLast (tDLList *L);
 
-/*
-** Prostřednictvím parametru val vrátí hodnotu prvního prvku seznamu L.
-** Pokud je seznam L prázdný, volá funkci DLError().
-**/
-void DLCopyFirst (tDLList *, Token *);
+/**
+ * Inserts an element before the active element of the L list
+ *
+ * @param L Pointer to list
+ * @param token Token Pointer to output token
+ */
+void DLPreInsert (tDLList *L, Token *token);
 
-/*
-** Prostřednictvím parametru val vrátí hodnotu posledního prvku seznamu L.
-** Pokud je seznam L prázdný, volá funkci DLError().
-**/
-void DLCopyLast (tDLList *, Token *);
+/**
+ * Moves the activity to the next item in the list L
+ *
+ * @param L Pointer to list
+ */
+void DLSucc (tDLList *L);
 
-/*
-** Zruší první prvek seznamu L. Pokud byl první prvek aktivní, aktivita 
-** se ztrácí. Pokud byl seznam L prázdný, nic se neděje.
-**/
-void DLDeleteFirst (tDLList *);
-
-/*
-** Zruší poslední prvek seznamu L.
-** Pokud byl poslední prvek aktivní, aktivita seznamu se ztrácí.
-** Pokud byl seznam L prázdný, nic se neděje.
-**/ 
-void DLDeleteLast (tDLList *);
-
-/*
-** Zruší prvek seznamu L za aktivním prvkem.
-** Pokud je seznam L neaktivní nebo pokud je aktivní prvek
-** posledním prvkem seznamu, nic se neděje.
-**/
-void DLPostDelete (tDLList *);
-
-/*
-** Zruší prvek před aktivním prvkem seznamu L .
-** Pokud je seznam L neaktivní nebo pokud je aktivní prvek
-** prvním prvkem seznamu, nic se neděje.
-**/
-void DLPreDelete (tDLList *);
-
-/*
-** Vloží prvek za aktivní prvek seznamu L.
-** Pokud nebyl seznam L aktivní, nic se neděje.
-** V případě, že není dostatek paměti pro nový prvek při operaci malloc,
-** volá funkci DLError().
-**/
-void DLPostInsert (tDLList *, Token *);
-
-/*
-** Vloží prvek před aktivní prvek seznamu L.
-** Pokud nebyl seznam L aktivní, nic se neděje.
-** V případě, že není dostatek paměti pro nový prvek při operaci malloc,
-** volá funkci DLError().
-**/
-void DLPreInsert (tDLList *, Token *);
-
-/*
-** Prostřednictvím parametru val vrátí hodnotu aktivního prvku seznamu L.
-** Pokud seznam L není aktivní, volá funkci DLError ().
-**/
-void DLCopy (tDLList *, Token *);
-
-/*
-** Přepíše obsah aktivního prvku seznamu L.
-** Pokud seznam L není aktivní, nedělá nic.
-**/
-void DLActualize (tDLList *, Token *);
-
-/*
-** Posune aktivitu na následující prvek seznamu L.
-** Není-li seznam aktivní, nedělá nic.
-** Všimněte si, že při aktivitě na posledním prvku se seznam stane neaktivním.
-**/
-void DLSucc (tDLList *);
-
-/*
-** Posune aktivitu na předchozí prvek seznamu L.
-** Není-li seznam aktivní, nedělá nic.
-** Všimněte si, že při aktivitě na prvním prvku se seznam stane neaktivním.
-**/
-void DLPred (tDLList *);
-
-/*
-** Je-li seznam L aktivní, vrací nenulovou hodnotu, jinak vrací 0.
-** Funkci je vhodné implementovat jedním příkazem return.
-**/
-int DLActive (tDLList *);
+/**
+ * Moves the activity to the previous element of the list L
+ *
+ * @param L Pointer to list
+ */
+void DLPred (tDLList *L);

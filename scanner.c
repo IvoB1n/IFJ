@@ -16,7 +16,6 @@ void print_scan_token (Token *token) {
 int init_token(char c, Token *token) {
     token->data = malloc(sizeof(char));
     if (!(token->data)) {
-        fprintf(stderr, "Malloc error\n");
         free(token->data);
         return INTERNAL_ERROR;
     } else {
@@ -29,7 +28,6 @@ int init_token(char c, Token *token) {
 int expand_token(char c, Token *token) {
     token->data = realloc(token->data, (token->data_size + 1) * sizeof(char));
     if (!(token->data)) {
-        fprintf(stderr, "Realloc error\n");
         free(token->data);
         return INTERNAL_ERROR;
         
@@ -60,7 +58,6 @@ void parser_function (Token *token) {
             return;
         }
     }
-    print_scan_token(token);
     DLInsertLast(&token_list, token);
     free_token(token);
 }
@@ -118,7 +115,6 @@ int control_exp(Token *token, char *c) {
                     return 0;
                 }
             } else {
-                //free(token->data);
                 return LEXICAL_ERROR;
             }
         }
@@ -143,7 +139,6 @@ int control_exp(Token *token, char *c) {
         }
     } else {
         fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
-        //free(token->data);
         return LEXICAL_ERROR;
     }
 }
@@ -165,7 +160,6 @@ int control_float(Token *token, char *c) {
             }
         }
     } else {
-        //free(token->data);
         return LEXICAL_ERROR;
     }
 
@@ -177,11 +171,9 @@ int control_float(Token *token, char *c) {
         *c = getchar();
         switch(control_exp(token, c)) {
             case LEXICAL_ERROR: {
-                //free(token->data);
                 return LEXICAL_ERROR;
             }
             case INTERNAL_ERROR: {
-                //free(token->data);
                 return INTERNAL_ERROR;
             }
             default: return 0;
@@ -489,7 +481,6 @@ int scan_token(Token *token) {
                     }
                 }
                 free(token->data);
-                //free_token(token);
                 c = getchar();
             } else {
                 parser_function(token);
@@ -701,7 +692,6 @@ int scan_token(Token *token) {
                         default: continue;
                     }
                 }
-                //c = getchar();
             }
                 parser_function(token);
              

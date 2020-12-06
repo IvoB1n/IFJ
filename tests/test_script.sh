@@ -34,14 +34,13 @@ test() {
             echo "                        /"
         elif [ "$less_flag" = "-v" ]; then
             echo "$1"
-            valgrind --leak-check=full --track-origins=yes --verbose ./compiler < "$1" 
+            rm valgrind.txt
+            valgrind --leak-check=full --track-origins=yes --show-leak-kinds=all ./compiler < "$1" >gen.code 2>valgrind.txt
             ret_val=$?
             line=$(head -n 1 $1)
             echo "  "
-            echo "return value:       \e[0;36m $ret_val \e[0m   \e[0;36m ///// \e[0m"
-            echo "expected:\e[0;33m $line \e[0m  \e[0;33m ///// \e[0m" 
-            echo "                         /"
-            echo "                        /"
+            echo "return value:        $ret_val"
+            echo "expected $line " 
         elif [ "$less_flag" = "-lv" ]; then
             echo "$1"
             valgrind ./compiler < "$1" >/dev/null # 2>/dev/null
@@ -78,9 +77,9 @@ test() {
             ret_valcom=$?
             echo " ~~~~~~~~~ "
             ./ic20int gen.code
+            ret_valint=$?
             echo ""
             echo " ~~~~~~~~~ "
-            ret_valint=$?
             
             line=$(head -n 1 $1)
             echo "return value comp:   $ret_valcom "

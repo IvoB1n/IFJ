@@ -9,10 +9,10 @@
 void clean_resources() {
     //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
+    sym_table_clear_all(&sym_table);
     DLDisposeList(&token_list);
     //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
 
-    sym_table_clear_all(&sym_table);
     //fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     //sym_table_clear_all(&asm_table);
 
