@@ -53,11 +53,14 @@ void parser_function (Token *token) {
         token->type != PACKAGE &&
         token->type != RETURN &&
         token->type != STRING &&
-        token->type != ID) {
+        token->type != ID/* &&
+        token->type != BOOL && 
+        token->type != BOOLEAN*/) {
         if (expand_token('\0', token)) {
             return;
         }
     }
+    //print_scan_token(token);
     DLInsertLast(&token_list, token);
     free_token(token);
 }
@@ -84,7 +87,14 @@ Token control_reserved_words (Token *token) {
         token->type = RETURN;
     } else if (strcmp(token->data, "string") == 0) {
         token->type = STRING;
-    }
+    } /*else if (strcmp(token->data, "bool") == 0) {
+        token->type = BOOL;
+    } else if (strcmp(token->data, "true") == 0) {
+        token->type = BOOLEAN;
+    } else if (strcmp(token->data, "false") == 0) {
+        token->type = BOOLEAN;
+    }*/
+
     return *token;
 }
 
@@ -416,6 +426,7 @@ int scan_token(Token *token) {
             } else {
                 free(token->data);
                 return LEXICAL_ERROR;
+                //parser_function(token);
             }
 
         // token =
