@@ -130,7 +130,7 @@ void template_print(unsigned i, unsigned func_call_num) {
         fprintf(stdout, "POPS LF@%%retval%u\n", t);
     }
     for (unsigned n = i - 1; n > 0; n--) {
-       fprintf(stdout, "WRITE LF@%%retval%u\n", n);
+        fprintf(stdout, "WRITE LF@%%retval%u\n", n);
     }
     fprintf(stdout, "POPFRAME\n");
     }    

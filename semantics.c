@@ -434,7 +434,7 @@ void  clear_item(Sym_table_item *item) {
 */
 int sem_type_rule(Token *token, Sym_table_item *item_ptr, int in_out_var) {
     sem_get_next_token(token);
-    if ((token->type == INT) || (token->type == FLOAT64) || (token->type == STRING)) {
+    if ((token->type == INT) || (token->type == FLOAT64) || (token->type == STRING)){// || (token->type = BOOL)) {
         if (token->type == INT) {
             token->type = INTEGER;
         }
@@ -443,7 +443,10 @@ int sem_type_rule(Token *token, Sym_table_item *item_ptr, int in_out_var) {
         }
         else if (token->type == STRING) {
             token->type = STR_END;
-        }
+        }/*
+        else if (token->type == BOOL) {
+            token->type = BOOLEAN;
+        }*/
 
         if (in_out_var == IN_VAR) {
             if (item_ptr->value.func.num_in_var > 0) {
@@ -488,7 +491,11 @@ int sem_param_next_rule(Token *token, Sym_table_item *item_ptr, int in_out_var) 
         return SYNTAX_ERROR;
     }
 
-    sem_get_next_token(token);
+    do {
+        sem_get_next_token(token);
+    } while (token_list.Act != NULL && token->type == END_OF_LINE);
+
+    //sem_get_next_token(token);
     if (token->type != ID) {
         clear_item(item_ptr);
         return SYNTAX_ERROR;
