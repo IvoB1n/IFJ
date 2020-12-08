@@ -140,10 +140,10 @@ unsigned prec_table [PREC_TABLE_SIZE][PREC_TABLE_SIZE] = {
 void arithm_template(tDLElemPtr s_token) {
     if (exp_type == BOOLEAN) {
         switch(s_token->token.type) {
-            case AND:
+            case MUL:
                 fprintf(stdout, "ANDS\n");
                 break;
-            case OR:
+            case ADD:
                 fprintf(stdout, "ORS\n");
                 break;
         };
@@ -440,6 +440,19 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *types_list, unsigned *exp_t, uns
                 exp_type = token_list.Act->token.type;
                 DLInsertLast(EList, &(token_list.Act->token));
                 break;
+            case AND:
+                token_list.Act->token.type = MUL;
+                DLInsertLast(EList, &(token_list.Act->token));
+                break;
+            case OR:
+                token_list.Act->token.type = ADD;
+                DLInsertLast(EList, &(token_list.Act->token));
+                break;
+            case NOT:
+                token_list.Act->token.type = SUB;
+                exp_type = BOOLEAN;
+                DLInsertLast(EList, &(token_list.Act->token));
+                break;
             default:
                 DLInsertLast(EList, &(token_list.Act->token));
                 break;
@@ -511,7 +524,7 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *types_list, unsigned *exp_t, uns
 tDLElemPtr get_term(tDLList *L){
     tDLElemPtr non_term = L->First;
     while(non_term != NULL){
-        if (non_term->token.type <= DOLLAR) {
+        if (non_term->token.type <= DOLLAR || non_term->token.type == AND || non_term->token.type == OR) {
             break;
         } else {
             non_term = non_term->rptr;
@@ -585,15 +598,19 @@ int reduce(tDLList *stack, int *stack_size, unsigned* depth, unsigned* func_call
             } else if (count_active_non_terms(stack) == 2 && s_token->lptr != NULL) {
                 if (s_token->lptr->token.type == E && s_token->rptr->token.type == SHIFT) {
                     if (*func_call_num > 1) {
-                        fprintf(stdout, "POPS GF@&div_zero_number\n");
-                        if (exp_type == INTEGER) {
-                            fprintf(stdout, "PUSHS int@%d\n", 0);
-                        } else if (exp_type == FLOAT) {
-                            fprintf(stdout, "PUSHS float@%a\n", 0.0);
-                            fprintf(stderr, "float@ (%f)\n", 0.0);
+                        if (exp_type == BOOLEAN) {
+                            fprintf(stdout, "NOTS\n");
+                        } else {
+                            fprintf(stdout, "POPS GF@&div_zero_number\n");
+                            if (exp_type == INTEGER) {
+                                fprintf(stdout, "PUSHS int@%d\n", 0);
+                            } else if (exp_type == FLOAT) {
+                                fprintf(stdout, "PUSHS float@%a\n", 0.0);
+                                fprintf(stderr, "float@ (%f)\n", 0.0);
+                            }
+                            generate_push_by_type(s_token->lptr, depth);
+                            fprintf(stdout, "SUBS\n");
                         }
-                        generate_push_by_type(s_token->lptr, depth);
-                        fprintf(stdout, "SUBS\n");
                     }
                     pop(stack);
                     pop(stack);
@@ -719,24 +736,24 @@ int expression(tDLList *types_list, unsigned exp_t, unsigned depth, unsigned fun
     unsigned prec_table_rule;
     do {
         prec_table_rule = 0;
-        if (exp_type == BOOLEAN) {
-            switch (L.Act->token.type) {
-                case AND:
-                    prec_table_rule = get_prec_table_rule(s_token->token.type, MUL);
-                    fprintf(stderr, "rule[%u][%u]=%u\n", s_token->token.type, MUL, prec_table_rule);
-                    break;
-                case OR:
-                    prec_table_rule = get_prec_table_rule(s_token->token.type, ADD);
-                    fprintf(stderr, "rule[%u][%u]=%u\n", s_token->token.type, ADD, prec_table_rule);
-                    break;
-                default:
-                    prec_table_rule = get_prec_table_rule(s_token->token.type, L.Act->token.type);
-                    fprintf(stderr, "rule[%u][%u]=%u\n", s_token->token.type, L.Act->token.type, prec_table_rule);
-                    break;
-            };
-        } else {
+        // if (exp_type == BOOLEAN) {
+        //     switch (L.Act->token.type) {
+        //         case AND:
+        //             prec_table_rule = get_prec_table_rule(s_token->token.type, MUL);
+        //             fprintf(stderr, "rule[%u][%u]=%u\n", s_token->token.type, MUL, prec_table_rule);
+        //             break;
+        //         case OR:
+        //             prec_table_rule = get_prec_table_rule(s_token->token.type, ADD);
+        //             fprintf(stderr, "rule[%u][%u]=%u\n", s_token->token.type, ADD, prec_table_rule);
+        //             break;
+        //         default:
+        //             prec_table_rule = get_prec_table_rule(s_token->token.type, L.Act->token.type);
+        //             fprintf(stderr, "rule[%u][%u]=%u\n", s_token->token.type, L.Act->token.type, prec_table_rule);
+        //             break;
+        //     };
+        // } else {
             prec_table_rule = get_prec_table_rule(s_token->token.type, L.Act->token.type);
-        }
+        // }
 
         switch (prec_table_rule) {
             case EQUAL:
