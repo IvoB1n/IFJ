@@ -10,6 +10,24 @@ unsigned exp_type;
 #define PREC_TABLE_SIZE 14
 
 /**
+ * Controls true or false values
+ * 
+ * @param elem pointer to token list element
+ * @return 0 successful control
+ * @return 1 dividion by zero const accrued
+ */
+int bool_value_check(tDLElemPtr elem) {
+    char* true_str = "true\0";
+    char* false_str = "false\0";
+    
+    if ((strcmp(true_str, elem->token.data) == 0 ) ||
+        (strcmp(false_str, elem->token.data) == 0)) {
+        return 1;
+    }
+    return 0;
+}
+
+/**
  * Converts string to ifj20.code format
  * 
  * @param s_token pointer to token list node, with string
@@ -68,8 +86,10 @@ void generate_str (tDLElemPtr s_token) {
  */
 void generate_push_by_type(tDLElemPtr s_token, unsigned *depth ) {
     Sym_table_item *item;
+    // fprintf(stderr, "exp_push_type= %u\n", exp_type);
     if (((s_token->token.data[0] >= 'a' && s_token->token.data[0] <= 'z') ||
-         (s_token->token.data[0] >= 'A' && s_token->token.data[0] <= 'Z'))) {
+         (s_token->token.data[0] >= 'A' && s_token->token.data[0] <= 'Z'))&&
+         !bool_value_check(s_token)) {
         item = sym_table_search_item(&sym_table, s_token->token.data, *depth);
         if (item == NULL) {
             return;
@@ -86,7 +106,9 @@ void generate_push_by_type(tDLElemPtr s_token, unsigned *depth ) {
     } else if (exp_type == STR_END) {
         fprintf(stdout, "PUSHS string@");
         generate_str(s_token);
-    }
+    } else if (exp_type == BOOLEAN && bool_value_check(s_token)) {
+        fprintf(stdout, "PUSHS bool@%s\n", s_token->token.data);
+    } 
 }
 
 /**
@@ -100,12 +122,12 @@ unsigned prec_table [PREC_TABLE_SIZE][PREC_TABLE_SIZE] = {
     {REDUCE, REDUCE, REDUCE, REDUCE, SHIFT, REDUCE, REDUCE, REDUCE, REDUCE, REDUCE, REDUCE, REDUCE, SHIFT, REDUCE}, // /
     {SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, EQUAL,  SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, NONE  }, // (
     {REDUCE, REDUCE, REDUCE, REDUCE, NONE,  REDUCE, REDUCE, REDUCE, REDUCE, REDUCE, REDUCE, REDUCE, NONE,  REDUCE}, // )
-    {SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, REDUCE, NONE,   NONE,   NONE,   NONE,   NONE,   NONE,   SHIFT, REDUCE}, // <
-    {SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, REDUCE, NONE,   NONE,   NONE,   NONE,   NONE,   NONE,   SHIFT, REDUCE}, // <=
-    {SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, REDUCE, NONE,   NONE,   NONE,   NONE,   NONE,   NONE,   SHIFT, REDUCE}, // >
-    {SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, REDUCE, NONE,   NONE,   NONE,   NONE,   NONE,   NONE,   SHIFT, REDUCE}, // >=
-    {SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, REDUCE, SHIFT,  NONE,   NONE,   NONE,   NONE,   NONE,   SHIFT, REDUCE}, // ==
-    {SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, REDUCE, SHIFT,  NONE,   NONE,   NONE,   NONE,   NONE,   SHIFT, REDUCE}, // !=
+    {SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, REDUCE, NONE,   NONE,   NONE,   NONE,   REDUCE, REDUCE, SHIFT, REDUCE}, // <
+    {SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, REDUCE, NONE,   NONE,   NONE,   NONE,   REDUCE, REDUCE, SHIFT, REDUCE}, // <=
+    {SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, REDUCE, NONE,   NONE,   NONE,   NONE,   REDUCE, REDUCE, SHIFT, REDUCE}, // >
+    {SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, REDUCE, NONE,   NONE,   NONE,   NONE,   REDUCE, REDUCE, SHIFT, REDUCE}, // >=
+    {SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, REDUCE, SHIFT,  SHIFT,  SHIFT,  SHIFT,  NONE,   NONE,   SHIFT, REDUCE}, // ==
+    {SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, REDUCE, SHIFT,  SHIFT,  SHIFT,  SHIFT,  NONE,   NONE,   SHIFT, REDUCE}, // !=
     {REDUCE, REDUCE, REDUCE, REDUCE, NONE,  REDUCE, REDUCE, REDUCE, REDUCE, REDUCE, REDUCE, REDUCE, NONE,  REDUCE}, // i
     {SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, NONE,   SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT,  SHIFT, NONE }}; // $
 
@@ -116,7 +138,23 @@ unsigned prec_table [PREC_TABLE_SIZE][PREC_TABLE_SIZE] = {
  * @return 
  */
 void arithm_template(tDLElemPtr s_token) {
-    if (exp_type != STR_END) {
+    if (exp_type == BOOLEAN) {
+        switch(s_token->token.type) {
+            case AND:
+                fprintf(stdout, "ANDS\n");
+                break;
+            case OR:
+                fprintf(stdout, "ORS\n");
+                break;
+        };
+        done_ops+=1;
+    } else if (exp_type == STR_END) {
+        fprintf(stdout, "POPS GF@&str_concat_2\n");
+        fprintf(stdout, "POPS GF@&str_concat_1\n");
+        fprintf(stdout, "CONCAT GF@&str_concat_res GF@&str_concat_1 GF@&str_concat_2\n");
+        fprintf(stdout, "PUSHS GF@&str_concat_res\n");
+        done_ops+=1;
+    } else {
         switch(s_token->token.type) {
             case ADD:
                 fprintf(stdout, "ADDS\n");
@@ -142,11 +180,6 @@ void arithm_template(tDLElemPtr s_token) {
                 break;
         };
         done_ops+=1;
-    } else {
-        fprintf(stdout, "POPS GF@&str_concat_2\n");
-        fprintf(stdout, "POPS GF@&str_concat_1\n");
-        fprintf(stdout, "CONCAT GF@&str_concat_res GF@&str_concat_1 GF@&str_concat_2\n");
-        fprintf(stdout, "PUSHS GF@&str_concat_res\n");
     }
 }
 
@@ -354,6 +387,7 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *types_list, unsigned *exp_t, uns
     Sym_table_item *item;
 
     while (token_list.Act != NULL) {
+        // fprintf(stderr,  "type= %-4d   data= %-4s  d_size= %-4d\n", token_list.Act->token.type, token_list.Act->token.data, token_list.Act->token.data_size);
         if (token_list.Act->token.type == END_OF_LINE ||
             token_list.Act->token.type == CURLY_BR_L  ||
             token_list.Act->token.type == SEMICOLON   ||
@@ -369,10 +403,12 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *types_list, unsigned *exp_t, uns
             case ID:
                 item = sym_table_search_item(&sym_table, token_list.Act->token.data, depth);
                 if (item == NULL) {
+                    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                     err = SEMANTIC_UNDEFINED_VAR_ERROR;
                     break;
                 } else {
                     if (strcmp(token_list.Act->token.data, "_\0") == 0) {
+                        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                         err = SEMANTIC_DATA_TYPES_ERROR;
                     } else {
                         exp_type = item->value.var.type;
@@ -385,6 +421,7 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *types_list, unsigned *exp_t, uns
                 if (token_list.Act->rptr->token.type == DIV ||
                     token_list.Act->rptr->token.type == SUB ||
                     token_list.Act->rptr->token.type == MUL) {
+                    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                     err = SEMANTIC_DATA_TYPES_ERROR;
                 }
                 exp_type = token_list.Act->token.type;
@@ -393,8 +430,13 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *types_list, unsigned *exp_t, uns
             case INTEGER:
             case FLOAT:
                 if (div_by_zero_check(token_list.Act)) {
+                    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                     err = SEMANTIC_ZERO_DIVIDION_ERROR;
                 }
+                exp_type = token_list.Act->token.type;
+                DLInsertLast(EList, &(token_list.Act->token));
+                break;
+            case BOOLEAN:
                 exp_type = token_list.Act->token.type;
                 DLInsertLast(EList, &(token_list.Act->token));
                 break;
@@ -434,14 +476,17 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *types_list, unsigned *exp_t, uns
                 break;
             case EQ_SYM:
             case DECLARE:
+                fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                 err = SYNTAX_ERROR;
                 break;
             case ID:
             case STR_END:
             case INTEGER:
             case FLOAT:
+            case BOOLEAN:
                 n_of_var+=1;
                 if (EList->Act->token.type != exp_type) {
+                    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                     err = SEMANTIC_DATA_TYPES_ERROR;
                 }
                 EList->Act->token.type = I;
@@ -450,6 +495,7 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *types_list, unsigned *exp_t, uns
         EList->Act = EList->Act->rptr; 
     }
     if ((*exp_t == IF || *exp_t == FOR) && ops == 0 && n_of_var > 0) {
+        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         return SEMANTIC_DATA_TYPES_ERROR;
     }
     
@@ -457,12 +503,12 @@ unsigned exp_list_ctor(tDLList *EList, tDLList *types_list, unsigned *exp_t, uns
 }
 
 /**
- * Find first nonterminal token
+ * Find first terminal token
  * 
  * @param L pointer to precedental stack
  * @return pointer to nonterminal item
  */
-tDLElemPtr get_non_term(tDLList *L){
+tDLElemPtr get_term(tDLList *L){
     tDLElemPtr non_term = L->First;
     while(non_term != NULL){
         if (non_term->token.type <= DOLLAR) {
@@ -506,7 +552,7 @@ int count_active_non_terms(tDLList *L){
  * @return 5 Expression data types error
  */
 int reduce(tDLList *stack, int *stack_size, unsigned* depth, unsigned* func_call_num) {
-    tDLElemPtr s_token = get_non_term(stack);
+    tDLElemPtr s_token = get_term(stack);
     switch(s_token->token.type) {
         case I:       // EXPR -> i
             if (s_token->rptr->token.type == SHIFT && *stack_size >= 3) {
@@ -516,10 +562,11 @@ int reduce(tDLList *stack, int *stack_size, unsigned* depth, unsigned* func_call
                 insert_E(stack);
                 *stack_size-=1;
             } else {
+                fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                 return SYNTAX_ERROR;
             }
             break;
-        case SUB:     // EXPR -> EXPR + EXPR
+        case SUB:     // EXPR -> EXPR - EXPR
             if (count_active_non_terms(stack) == 3) {
                 if (s_token->lptr->token.type == E && s_token->rptr->token.type == E) {
                     *stack_size-=3;
@@ -532,6 +579,7 @@ int reduce(tDLList *stack, int *stack_size, unsigned* depth, unsigned* func_call
                     pop(stack);
                     insert_first_by_type(stack, E);
                 } else {
+                    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                     return SYNTAX_ERROR;
                 }
             } else if (count_active_non_terms(stack) == 2 && s_token->lptr != NULL) {
@@ -553,16 +601,20 @@ int reduce(tDLList *stack, int *stack_size, unsigned* depth, unsigned* func_call
                     insert_first_by_type(stack, E);
                     *stack_size-=2;
                 } else {
+                    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                     return SYNTAX_ERROR;
                 }
             } else {
+                fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                 return SYNTAX_ERROR;
             }
             break;
-        case ADD:     // EXPR -> EXPR - EXPR
+        case ADD:     // EXPR -> EXPR + EXPR
         case MUL:     // EXPR -> EXPR * EXPR
         case DIV:     // EXPR -> EXPR / EXPR
-            if (count_active_non_terms(stack) == 3) { // create tmp, 
+        case AND:
+        case OR:
+            if (count_active_non_terms(stack) == 3) {
                 if (s_token->lptr->token.type == E && s_token->rptr->token.type == E) {
                     *stack_size-=3;
                     if (*func_call_num > 1) {
@@ -574,9 +626,13 @@ int reduce(tDLList *stack, int *stack_size, unsigned* depth, unsigned* func_call
                     pop(stack);
                     insert_first_by_type(stack, E);
                 } else {
+                                    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
                     return SYNTAX_ERROR;
                 }
             } else {
+                                fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
                 return SYNTAX_ERROR;
             }
             break;
@@ -599,6 +655,8 @@ int reduce(tDLList *stack, int *stack_size, unsigned* depth, unsigned* func_call
                     insert_first_by_type(stack, E);
                     done_ops+=1;
                 } else {
+                                    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
                     return SYNTAX_ERROR;
                 }
             } else {
@@ -615,13 +673,19 @@ int reduce(tDLList *stack, int *stack_size, unsigned* depth, unsigned* func_call
                     insert_first_by_type(stack, E);
                     *stack_size-=3;
                 } else {
+                                    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
                     return SYNTAX_ERROR;
                 }
             } else {
+                                fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
                 return SYNTAX_ERROR;
             }
             break;
         default:
+                        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
             return SYNTAX_ERROR; 
     };
     return 0; 
@@ -644,13 +708,35 @@ int expression(tDLList *types_list, unsigned exp_t, unsigned depth, unsigned fun
 
     L.Act = L.First;
 
+    // fprintf(stderr, "~~~~~~~~~search~~~~~~~~~~~\n");
+    // print_exp_list(&L);
+
     insert_first_by_type(&stack, DOLLAR);
 
-    tDLElemPtr s_token = get_non_term(&stack);
+    tDLElemPtr s_token = get_term(&stack);
     int retval = 0;
     int stack_size = 1;
+    unsigned prec_table_rule;
     do {
-        unsigned prec_table_rule = get_prec_table_rule(s_token->token.type, L.Act->token.type);
+        prec_table_rule = 0;
+        if (exp_type == BOOLEAN) {
+            switch (L.Act->token.type) {
+                case AND:
+                    prec_table_rule = get_prec_table_rule(s_token->token.type, MUL);
+                    fprintf(stderr, "rule[%u][%u]=%u\n", s_token->token.type, MUL, prec_table_rule);
+                    break;
+                case OR:
+                    prec_table_rule = get_prec_table_rule(s_token->token.type, ADD);
+                    fprintf(stderr, "rule[%u][%u]=%u\n", s_token->token.type, ADD, prec_table_rule);
+                    break;
+                default:
+                    prec_table_rule = get_prec_table_rule(s_token->token.type, L.Act->token.type);
+                    fprintf(stderr, "rule[%u][%u]=%u\n", s_token->token.type, L.Act->token.type, prec_table_rule);
+                    break;
+            };
+        } else {
+            prec_table_rule = get_prec_table_rule(s_token->token.type, L.Act->token.type);
+        }
 
         switch (prec_table_rule) {
             case EQUAL:
@@ -682,16 +768,20 @@ int expression(tDLList *types_list, unsigned exp_t, unsigned depth, unsigned fun
             case NONE:
                 exp_list_dtor(&stack);
                 exp_list_dtor(&L);
+                fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                 return SYNTAX_ERROR;
             default:
                 exp_list_dtor(&stack);
                 exp_list_dtor(&L);
+                fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
                 return SYNTAX_ERROR;
         };
+        // fprintf(stderr, "---stack items---\n");
+        // print_exp_list(&stack);
         
-        s_token = get_non_term(&stack);
+        s_token = get_term(&stack);
     } while ((s_token->token.type != DOLLAR) || (L.Act->token.type != DOLLAR));
-
+    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
     exp_type = 0;
     exp_list_dtor(&stack);
     exp_list_dtor(&L);

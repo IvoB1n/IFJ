@@ -159,7 +159,7 @@ void get_next_token(Token *token) {
     if (token_list.Act != NULL) {
         *token = token_list.Act->token;
 
-       // print_token(token);
+      //  print_token(token);
         DLSucc(&token_list);
     }
 
@@ -174,10 +174,9 @@ int expression_rule(Token *token, tDLList *list, unsigned depth, unsigned is_fun
    
     int retval = 0;
     if (token->type == ID) {
-       
         retval = func_call(token, list, depth);
         if (retval == FUNC_CALL) {
-            return 0;
+            return FUNC_CALL;
         }
         else if (retval) {
             return retval;
@@ -203,10 +202,10 @@ int type_rule(Token *token) {
     }
     else if (token->type == STRING) {
         token->type = STR_END;
-    }/*
+    }
     else if (token->type == BOOL) {
         token->type = BOOLEAN;
-    }*/
+    }
     else {
         return SYNTAX_ERROR;
     }
@@ -554,15 +553,21 @@ int check_types_in_assignment(tDLList *left_list, tDLList *right_list, unsigned 
 
             Sym_table_item *item = sym_table_search_item(&sym_table, left_list->Act->token.data, depth);
             if (!item) {
+                            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
                 return SEMANTIC_UNDEFINED_VAR_ERROR;
             }
 
             if (item->value.var.type != right_list->Act->token.type) {
+                            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
                 return SEMANTIC_OTHER_ERRORS;
             }
         }
         else {
             if (left_list->Act->token.type != right_list->Act->token.type) {
+                            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
                 return SEMANTIC_OTHER_ERRORS;
             }
         }
@@ -846,6 +851,8 @@ int func_call(Token *token, tDLList *list, unsigned depth) {
             }
             item =  sym_table_search_item(&sym_table, func_name, 0);
             if (!item) {
+                            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
                 return SEMANTIC_UNDEFINED_VAR_ERROR;
             }
             for (unsigned i = 0; i < item->value.func.num_out_var; i++) {
@@ -902,6 +909,8 @@ int func_call(Token *token, tDLList *list, unsigned depth) {
             }
             item =  sym_table_search_item(&sym_table, func_name, 0);
             if (!item) {
+                            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
                 return SEMANTIC_UNDEFINED_VAR_ERROR;
             }
 
@@ -1113,11 +1122,15 @@ int assignment_rule(Token *token, unsigned depth, unsigned scope) {
         switch (equal) {
             case DECLARE:
                 if (was_not_declared_on_lvl(&assign_left_list, depth) == 1) {
+                                fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
                     return SEMANTIC_UNDEFINED_VAR_ERROR;
                 }
                 break;
             case EQ_SYM:
                 if (was_not_declared(&assign_left_list, depth) == 0 ) {
+                                fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
                     return SEMANTIC_UNDEFINED_VAR_ERROR;
                 }
                 break;
@@ -1132,17 +1145,26 @@ int assignment_rule(Token *token, unsigned depth, unsigned scope) {
         }
 
         retval = expression_rule(token, &assign_right_list, depth, NONE);
-        if (retval) {
+        if (retval == FUNC_CALL) {
+            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+        }
+        else if (retval) {
             free_list(&assign_left_list);
             free_list(&assign_right_list);
             return retval;
         }
-       
-        retval = expr_next_rule(token, &assign_right_list, depth, NONE);
-        if (retval) {
-            free_list(&assign_left_list);
-            free_list(&assign_right_list);
-            return retval;
+        else {
+            retval = expr_next_rule(token, &assign_right_list, depth, NONE);
+            if (retval == FUNC_CALL) {
+                free_list(&assign_left_list);
+                free_list(&assign_right_list);
+                return SEMANTIC_OTHER_ERRORS;
+            }
+            else if (retval) {
+                free_list(&assign_left_list);
+                free_list(&assign_right_list);
+                return retval;
+            }
         }
     }
 
@@ -1151,6 +1173,7 @@ int assignment_rule(Token *token, unsigned depth, unsigned scope) {
         if (retval) {
             free_list(&assign_left_list);
             free_list(&assign_right_list);
+            return retval;
         }
     }
 
@@ -1164,8 +1187,19 @@ int assignment_rule(Token *token, unsigned depth, unsigned scope) {
     DLLast(&assign_left_list);
     while (assign_left_list.Act) {
         Sym_table_item *asm_item = sym_table_search_item(&asm_table, assign_left_list.Act->token.data, depth);
+        
         if (func_call_num > 1)  {
-            fprintf(stdout, "POPS LF@%s%u\n", asm_item->name, asm_item->depth);
+            tDLElemPtr tmp = assign_left_list.Act->rptr;
+            while (tmp) {
+                if (strcmp(tmp->token.data, assign_left_list.Act->token.data) == 0) {
+                    fprintf(stdout, "POPS LF@_1\n");
+                    break;
+                }
+                tmp = tmp->rptr;
+            }
+            if (tmp == NULL) {
+                fprintf(stdout, "POPS LF@%s%u\n", asm_item->name, asm_item->depth);
+            }
         }
         DLPred(&assign_left_list);
     }
@@ -1229,6 +1263,7 @@ int statement_rule(Token *token, unsigned depth, char *curr_func_name, int *num_
 
         get_next_token(token);
         if (token->type != SEMICOLON) {
+            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
             return SYNTAX_ERROR;
         }
 
@@ -1331,6 +1366,8 @@ int statement_rule(Token *token, unsigned depth, char *curr_func_name, int *num_
         Sym_table_item *item = sym_table_search_item(&sym_table, curr_func_name, 0);
         if (!item) {
             free_list(&ret_list);
+                        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
             return SEMANTIC_UNDEFINED_VAR_ERROR;
         }
 
@@ -1338,11 +1375,15 @@ int statement_rule(Token *token, unsigned depth, char *curr_func_name, int *num_
         if ((item->value.func.num_out_var > 0 && ret_list.Act == NULL) 
                 || (item->value.func.num_out_var == 0 && ret_list.Act != NULL)) {
                 free_list(&ret_list);
+                            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
                 return SEMANTIC_FUNCTION_ERROR;
         }        
 
         for (unsigned i = item->value.func.num_out_var - 1; ret_list.Act; i--) {
             if (item->value.func.out_var_list[i] != ret_list.Act->token.type) {
+                            fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
                 return SEMANTIC_FUNCTION_ERROR;
             }
             DLPred(&ret_list);
@@ -1451,6 +1492,8 @@ int func_def_rule(Token *token) {
     }    
     Sym_table_item *item = sym_table_search_item(&sym_table, curr_func_name, 0);
         if (!item) {
+                        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
             return SEMANTIC_UNDEFINED_VAR_ERROR;
         }
     if (num_of_returns == 0 && item->value.func.num_out_var > 0) {
@@ -1587,6 +1630,8 @@ int parse() {
 
     Sym_table_item *item = sym_table_search_item(&sym_table, "main\0", 0);
     if (!item) {
+                    fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
+
         return SEMANTIC_UNDEFINED_VAR_ERROR;
     }
     if (item->value.func.num_in_var != 0 || item->value.func.num_out_var != 0 ) {

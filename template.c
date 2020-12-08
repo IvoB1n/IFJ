@@ -106,6 +106,7 @@ void template_inputb() {
     fprintf(stdout, "TYPE LF@!retval%u$type LF@%%retval%u\n", 1, 1);
     fprintf(stdout, "DEFVAR LF@!error\n");
     fprintf(stdout, "MOVE LF@!error int@0\n");
+    fprintf(stdout, "BREAK\n");
     fprintf(stdout, "JUMPIFNEQ  !inputb_check LF@!retval%u$type string@bool\n", 1);
 
     fprintf(stdout, "LABEL !inpb\n");
@@ -305,6 +306,7 @@ void print_head() {
     template_inputs();
     template_inputi();
     template_inputf();
+    template_inputb();
     template_int2float();
     template_float2int();
     template_len();

@@ -1,8 +1,8 @@
 // potom no ne fakt
 package main
 
-func alpha () (int, int) {
-	return 1, 2
+func alpha () (int,  float64, int, float64) {
+	return 1,  4.0,2, 8.0
 }
 
 func beta (param float64) (float64, string, float64) {
@@ -12,8 +12,9 @@ func beta (param float64) (float64, string, float64) {
 
 func main () {
 	a := 0
-	a,a = alpha()
-	print(a, "\n")
+	b := 5.0
+	a,b, a,  b = alpha()
+	print(a, "\n", b, "\n")
 
 	f := 0.0
 	f, _, f = beta(f)

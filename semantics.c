@@ -391,6 +391,41 @@ int insert_embedded_functions() {
 
     sym_table_insert_item(&sym_table, item10);
 
+    Sym_table_item *item11 = malloc(sizeof(Sym_table_item));
+    
+    if (!(item11)) {
+        clear_item(item11);
+        return INTERNAL_ERROR;
+    }
+    
+    item11->name = malloc(sizeof("inputb\0"));
+
+    if (!(item11->name)) {
+        clear_item(item11);
+        return INTERNAL_ERROR;
+    }
+
+    strcpy(item11->name, "inputb\0");
+
+    item11->depth = 0;
+    item11->nextPtr = NULL;
+    
+    item11->value.func.num_in_var = 0;
+    item11->value.func.in_var_list = NULL;
+
+    item11->value.func.num_out_var = 2;
+    item11->value.func.out_var_list = malloc(sizeof(unsigned) * item11->value.func.num_out_var);
+
+    if (!(item11->value.func.out_var_list)) {
+        clear_item(item11);
+        return INTERNAL_ERROR;
+    }
+
+    item11->value.func.out_var_list[0] = BOOLEAN;
+    item11->value.func.out_var_list[1] = INTEGER;
+
+    sym_table_insert_item(&sym_table, item11);
+
     return 0;
 }
 
@@ -434,7 +469,7 @@ void  clear_item(Sym_table_item *item) {
 */
 int sem_type_rule(Token *token, Sym_table_item *item_ptr, int in_out_var) {
     sem_get_next_token(token);
-    if ((token->type == INT) || (token->type == FLOAT64) || (token->type == STRING)){// || (token->type = BOOL)) {
+    if ((token->type == INT) || (token->type == FLOAT64) || (token->type == STRING) || (token->type = BOOL)) {
         if (token->type == INT) {
             token->type = INTEGER;
         }
@@ -443,10 +478,10 @@ int sem_type_rule(Token *token, Sym_table_item *item_ptr, int in_out_var) {
         }
         else if (token->type == STRING) {
             token->type = STR_END;
-        }/*
+        }
         else if (token->type == BOOL) {
             token->type = BOOLEAN;
-        }*/
+        }
 
         if (in_out_var == IN_VAR) {
             if (item_ptr->value.func.num_in_var > 0) {

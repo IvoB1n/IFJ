@@ -53,14 +53,13 @@ void parser_function (Token *token) {
         token->type != PACKAGE &&
         token->type != RETURN &&
         token->type != STRING &&
-        token->type != ID/* &&
+        token->type != ID &&
         token->type != BOOL && 
-        token->type != BOOLEAN*/) {
+        token->type != BOOLEAN) {
         if (expand_token('\0', token)) {
             return;
         }
     }
-    //print_scan_token(token);
     DLInsertLast(&token_list, token);
     free_token(token);
 }
@@ -87,13 +86,13 @@ Token control_reserved_words (Token *token) {
         token->type = RETURN;
     } else if (strcmp(token->data, "string") == 0) {
         token->type = STRING;
-    } /*else if (strcmp(token->data, "bool") == 0) {
+    } else if (strcmp(token->data, "bool") == 0) {
         token->type = BOOL;
     } else if (strcmp(token->data, "true") == 0) {
         token->type = BOOLEAN;
     } else if (strcmp(token->data, "false") == 0) {
         token->type = BOOLEAN;
-    }*/
+    }
 
     return *token;
 }
@@ -148,7 +147,6 @@ int control_exp(Token *token, char *c) {
             return 0;
         }
     } else {
-        fprintf(stderr, "%s %d\n", __FILE__, __LINE__);
         return LEXICAL_ERROR;
     }
 }
@@ -283,7 +281,6 @@ int scan_token(Token *token) {
             } else {
                 parser_function(token);
             }
-
         // token <     
         } else if (c == '<') {
             token->type = L;
@@ -361,7 +358,7 @@ int scan_token(Token *token) {
                 parser_function(token);
                 c = getchar();
             }
-        /*
+        
         // token &&
         } else if (c == '&') {
             if (init_token(c, token)) {
@@ -403,7 +400,7 @@ int scan_token(Token *token) {
                 free(token->data);
                 return LEXICAL_ERROR;
             }
-        */
+        
         // token !      // send ! in boolean
         } else if (c == '!') {
             token->type = NOT;
@@ -424,9 +421,9 @@ int scan_token(Token *token) {
                     c = getchar();
                 }
             } else {
-                free(token->data);
-                return LEXICAL_ERROR;
-                //parser_function(token);
+                /*free(token->data);
+                return LEXICAL_ERROR;*/
+                parser_function(token);
             }
 
         // token =
@@ -707,11 +704,18 @@ int scan_token(Token *token) {
                 parser_function(token);
              
         } else if (c == EOL) {
-            
             token->type = END_OF_LINE;
+            if (init_token(c, token)) {
+                free(token->data);
+                return INTERNAL_ERROR;
+            }
             parser_function(token);
             c = getchar();
         } else if (isspace(c)) {
+            if (init_token(c, token)) {
+                free(token->data);
+                return INTERNAL_ERROR;
+            }
             c = getchar();
         } else {
             free(token->data);
@@ -719,6 +723,10 @@ int scan_token(Token *token) {
         }
     }
     token->type = END_OF_LINE;
+    if (init_token(c, token)) {
+        free(token->data);
+        return INTERNAL_ERROR;
+    }
     parser_function(token);
     return 0;
 }
