@@ -15,7 +15,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#define SYM_TABLE_SIZE 1021 // Symbol table size
+#define SYM_TABLE_SIZE 606 // Symbol table size
 #define INDEX_SIZE 101      // Index level size
 
 struct Sym_table;

@@ -38,5 +38,7 @@ func main () {
 	res_a_neq_b := a != b
 	print("a(", a,") == ","b(", b,")= ", res_a_eq_b, "\n")
 	print("a(", a,") != ","b(", b,")= ", res_a_neq_b, "\n")
-	
+
+	res_ass:= (a==b) && (a != b)
+	// print (res_ass, "\n")	
 }
